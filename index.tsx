@@ -1,19 +1,19 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  Users, 
-  MessageSquare, 
-  BarChart3, 
-  Settings, 
-  Search, 
-  Bell, 
-  MessageCircle, 
-  Edit2, 
-  Trash2, 
-  Filter, 
-  Plus, 
+import {
+  LayoutDashboard,
+  Users,
+  MessageSquare,
+  BarChart3,
+  Settings,
+  Search,
+  Bell,
+  MessageCircle,
+  Edit2,
+  Trash2,
+  Filter,
+  Plus,
   Save,
   MapPin,
   Loader2,
@@ -36,8 +36,9 @@ const getApiKey = async () => {
       await window.aistudio.openSelectKey();
     }
   }
-  // @ts-ignore
-  return typeof process !== 'undefined' ? process.env?.API_KEY : import.meta.env.VITE_GEMINI_API_KEY;
+
+  const envKey = typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : (import.meta as any).env?.VITE_GEMINI_API_KEY;
+  return envKey;
 };
 
 // --- Components ---
@@ -71,7 +72,7 @@ const SpotlightCard = ({ children, className = '', delay = 0, neon = true }: { c
     >
       {neon && (
         <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none z-0">
-          <motion.div 
+          <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_0deg,transparent_70%,rgba(168,85,247,0.8)_90%,rgba(168,85,247,1)_100%)]"
@@ -117,9 +118,8 @@ const Sidebar = ({ currentRoute, setCurrentRoute }: { currentRoute: string, setC
             <button
               key={item.id}
               onClick={() => setCurrentRoute(item.id)}
-              className={`relative flex items-center px-3 py-3 rounded-lg transition-all duration-200 group ${
-                isActive ? 'text-white' : 'text-white/50 hover:text-white'
-              }`}
+              className={`relative flex items-center px-3 py-3 rounded-lg transition-all duration-200 group ${isActive ? 'text-white' : 'text-white/50 hover:text-white'
+                }`}
             >
               {isActive && (
                 <motion.div
@@ -190,9 +190,9 @@ const Dashboard = () => {
           <SpotlightCard key={i} delay={i * 0.1} className="p-6 h-full">
             <div className="text-white/50 text-xs tracking-wider uppercase mb-4">{kpi.label}</div>
             <div className="flex items-end justify-between">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }} 
-                animate={{ opacity: 1, scale: 1 }} 
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', delay: 0.2 + (i * 0.1) }}
                 className="text-3xl font-light"
               >
@@ -212,14 +212,14 @@ const Dashboard = () => {
               {[40, 65, 45, 80, 55, 90, 30].map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-3 group h-full">
                   <div className="w-full relative bg-white/5 rounded-t-sm overflow-hidden h-full flex items-end">
-                    <motion.div 
+                    <motion.div
                       initial={{ height: 0 }}
                       animate={{ height: `${h}%` }}
                       transition={{ duration: 1.5, delay: 0.5 + (i * 0.1), type: 'spring', bounce: 0.4 }}
                       className="w-full bg-purple-500/20 group-hover:bg-purple-500/40 transition-colors rounded-t-sm border-t border-purple-500/50"
                     />
                   </div>
-                  <span className="text-xs text-white/30 font-mono">D{i+1}</span>
+                  <span className="text-xs text-white/30 font-mono">D{i + 1}</span>
                 </div>
               ))}
             </div>
@@ -238,8 +238,8 @@ const Dashboard = () => {
                 { entity: 'Odontología Avanzada', action: 'Leyó el mensaje', time: 'Hace 3 horas' },
                 { entity: 'Hospital Privado', action: 'Campaña enviada', time: 'Hace 4 horas' },
               ].map((act, i) => (
-                <motion.div 
-                  key={i} 
+                <motion.div
+                  key={i}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.6 + (i * 0.1) }}
@@ -261,23 +261,33 @@ const Dashboard = () => {
 };
 
 const Prospects = () => {
+  const [prospects, setProspects] = useState<any[]>([]);
   const [showAiModal, setShowAiModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [aiLeads, setAiLeads] = useState('');
   const [aiChunks, setAiChunks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
 
-  const prospects = [
-    { id: 1, name: 'Clínica del Sol', contact: 'Dr. Roberto Gómez', status: 'Interesado', lastContact: 'Hoy, 10:30 AM' },
-    { id: 2, name: 'Estética Nueva Córdoba', contact: 'Lic. María Paz', status: 'Contactado', lastContact: 'Ayer, 16:45 PM' },
-    { id: 3, name: 'Sanatorio Allende', contact: 'Ing. Carlos Ruiz', status: 'Frío', lastContact: 'Hace 3 días' },
-    { id: 4, name: 'Consultorios Cerro', contact: 'Dra. Ana López', status: 'Cerrado', lastContact: 'Hace 1 semana' },
-    { id: 5, name: 'Odontología Avanzada', contact: 'Dr. Martín Silva', status: 'Interesado', lastContact: 'Hoy, 09:15 AM' },
-    { id: 6, name: 'Centro Médico Vital', contact: 'Lic. Sofía Herrera', status: 'Contactado', lastContact: 'Ayer, 11:20 AM' },
-  ];
+  useEffect(() => {
+    fetchProspects();
+  }, []);
+
+  const fetchProspects = async () => {
+    setIsFetching(true);
+    try {
+      const res = await fetch('/api/prospects');
+      const data = await res.json();
+      if (Array.isArray(data)) setProspects(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'Interesado': return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
       case 'Contactado': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
       case 'Cerrado': return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
@@ -292,9 +302,10 @@ const Prospects = () => {
       const key = await getApiKey();
       const ai = new GoogleGenAI({ apiKey: key });
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.0-flash",
         contents: `Encuentra prospectos B2B para: ${searchQuery}. Devuelve una lista de nombres de empresas y una breve descripción.`,
-        config: { tools: [{googleMaps: {}}] }
+        // @ts-ignore
+        config: { tools: [{ googleMaps: {} }] }
       });
       setAiLeads(response.text || '');
       setAiChunks(response.candidates?.[0]?.groundingMetadata?.groundingChunks || []);
@@ -313,7 +324,7 @@ const Prospects = () => {
           <p className="text-white/50 text-sm">Gestión de contactos B2B.</p>
         </motion.div>
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-3">
-          <button 
+          <button
             onClick={() => setShowAiModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg text-sm hover:bg-purple-500/20 transition-colors"
           >
@@ -338,24 +349,34 @@ const Prospects = () => {
               </tr>
             </thead>
             <tbody>
-              <AnimatePresence>
-                {prospects.map((p, i) => (
-                  <motion.tr 
-                    key={p.id} 
+              <AnimatePresence mode="popLayout">
+                {isFetching ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-20 text-center text-white/20 font-serif italic">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        Obteniendo datos de la base de datos...
+                      </div>
+                    </td>
+                  </tr>
+                ) : prospects.map((p, i) => (
+                  <motion.tr
+                    key={p.id}
                     layout
                     initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
                     animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 24 }}
                     className="border-b border-white/5 hover:bg-white/[0.03] transition-colors group"
                   >
                     <td className="px-6 py-4 text-sm font-medium text-white/90">{p.name}</td>
-                    <td className="px-6 py-4 text-sm text-white/60">{p.contact}</td>
+                    <td className="px-6 py-4 text-sm text-white/60">{p.contact || 'S/D'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] uppercase tracking-wider border ${getStatusColor(p.status)}`}>
                         {p.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-white/50">{p.lastContact}</td>
+                    <td className="px-6 py-4 text-sm text-white/50">{p.lastContact || 'Pendiente'}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="p-2 rounded-md hover:bg-purple-500/10 text-purple-500/70 hover:text-purple-400 transition-colors" title="WhatsApp">
@@ -371,6 +392,13 @@ const Prospects = () => {
                     </td>
                   </motion.tr>
                 ))}
+                {!isFetching && prospects.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-20 text-center text-white/20 font-serif italic text-sm">
+                      No hay prospectos en la base de datos. ¡Empezá a buscar con IA!
+                    </td>
+                  </tr>
+                )}
               </AnimatePresence>
             </tbody>
           </table>
@@ -380,11 +408,11 @@ const Prospects = () => {
       {/* AI Modal */}
       <AnimatePresence>
         {showAiModal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
               className="w-full max-w-2xl bg-[#0f0f0f] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
             >
@@ -394,14 +422,14 @@ const Prospects = () => {
               </div>
               <div className="p-6 space-y-4">
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Ej: Clínicas dentales en Nueva Córdoba..."
                     className="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm focus:border-purple-500/50 outline-none transition-colors text-white"
                   />
-                  <button 
+                  <button
                     onClick={handleSearchLeads}
                     disabled={loading || !searchQuery}
                     className="px-4 py-2 bg-purple-500 text-black rounded-lg text-sm font-medium hover:bg-purple-400 transition-colors disabled:opacity-50 flex items-center gap-2"
@@ -409,7 +437,7 @@ const Prospects = () => {
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Buscar
                   </button>
                 </div>
-                
+
                 <div className="h-64 overflow-y-auto bg-black/20 rounded-lg border border-white/5 p-4 text-sm text-white/80">
                   {loading ? (
                     <div className="h-full flex items-center justify-center text-white/30"><Loader2 className="w-6 h-6 animate-spin" /></div>
@@ -445,39 +473,28 @@ const Prospects = () => {
 };
 
 const Templates = () => {
-  const templates = [
-    {
-      id: 1,
-      title: 'Abridor Clínicas',
-      state: 'Frío',
-      content: 'Hola {nombre}, ¿cómo estás? Vi que están haciendo un excelente trabajo en {negocio}. Quería consultarte si actualmente están tomando nuevos pacientes o si tienen la agenda llena.',
-      variables: ['{nombre}', '{negocio}']
-    },
-    {
-      id: 2,
-      title: 'Seguimiento Valor (Día 3)',
-      state: 'Contactado',
-      content: 'Hola {nombre}, te escribo cortito para no robarte tiempo. ¿Pudiste ver el mensaje anterior sobre cómo podemos escalar las consultas en {negocio}?',
-      variables: ['{nombre}', '{negocio}']
-    },
-    {
-      id: 3,
-      title: 'Propuesta / Agendar',
-      state: 'Interesado',
-      content: 'Excelente {nombre}. Para avanzar con la propuesta para {negocio}, ¿te parece bien si agendamos una breve llamada de 10 min este {dia} a las {hora}?',
-      variables: ['{nombre}', '{negocio}', '{dia}', '{hora}']
-    },
-    {
-      id: 4,
-      title: 'Onboarding Cliente',
-      state: 'Cerrado',
-      content: '¡Bienvenido a Elite OS, {nombre}! Es un placer empezar a trabajar con {negocio}. Te acabo de enviar al correo los accesos y los próximos pasos para el onboarding.',
-      variables: ['{nombre}', '{negocio}']
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [isFetching, setIsFetching] = useState(false);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    setIsFetching(true);
+    try {
+      const res = await fetch('/api/templates');
+      const data = await res.json();
+      if (Array.isArray(data)) setTemplates(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsFetching(false);
     }
-  ];
+  };
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'Interesado': return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
       case 'Contactado': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
       case 'Cerrado': return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
@@ -496,7 +513,7 @@ const Templates = () => {
 
   const item = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } as any }
   };
 
   return (
@@ -522,9 +539,9 @@ const Templates = () => {
                   <>
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-4 w-2/3">
-                        <input 
-                          type="text" 
-                          defaultValue={tpl.title} 
+                        <input
+                          type="text"
+                          defaultValue={tpl.title}
                           className="bg-transparent text-xl font-serif font-light outline-none border-b border-transparent focus:border-white/20 transition-colors w-full pb-1 text-white"
                         />
                         <span className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider border whitespace-nowrap ${getStatusColor(tpl.state)}`}>
@@ -536,7 +553,7 @@ const Templates = () => {
                       </button>
                     </div>
                     <div className="relative">
-                      <textarea 
+                      <textarea
                         className="w-full h-40 bg-black/40 border border-white/10 rounded-lg p-5 text-sm text-white/80 focus:outline-none focus:border-white/30 transition-colors resize-none leading-relaxed"
                         defaultValue={tpl.content}
                       />
@@ -561,9 +578,9 @@ const Templates = () => {
                       </button>
                     </div>
                     <p className="text-sm text-white/50 leading-relaxed bg-black/20 p-4 rounded-lg border border-white/5">
-                      {tpl.content.split(/(\{.*?\})/).map((part, i) => 
-                        part.startsWith('{') && part.endsWith('}') 
-                          ? <span key={i} className="text-white/80 bg-white/5 px-1 rounded">{part}</span> 
+                      {tpl.content.split(/(\{.*?\})/).map((part, i) =>
+                        part.startsWith('{') && part.endsWith('}')
+                          ? <span key={i} className="text-white/80 bg-white/5 px-1 rounded">{part}</span>
                           : part
                       )}
                     </p>
@@ -598,14 +615,14 @@ const Analytics = () => {
               { label: 'Reuniones', value: '86', width: '50%', color: 'bg-purple-500/20 border-purple-500/50 text-purple-400' },
               { label: 'Cerrados', value: '24', width: '30%', color: 'bg-purple-500/20 border-purple-500/50 text-purple-400' },
             ].map((step, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + (i * 0.1) }}
                 className="flex flex-col items-start"
               >
-                <div 
+                <div
                   className={`h-12 rounded-lg border flex items-center justify-between px-4 w-full max-w-md ${step.color} relative overflow-hidden group`}
                   style={{ width: step.width }}
                 >
@@ -624,22 +641,22 @@ const Analytics = () => {
           </h3>
           <div className="flex-1 relative flex items-end gap-2">
             <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-              <motion.path 
+              <motion.path
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
                 transition={{ duration: 2, ease: "easeInOut", delay: 0.5 }}
-                d="M0,80 Q10,70 20,85 T40,60 T60,40 T80,50 T100,20" 
-                fill="none" 
-                stroke="rgba(168,85,247,0.5)" 
+                d="M0,80 Q10,70 20,85 T40,60 T60,40 T80,50 T100,20"
+                fill="none"
+                stroke="rgba(168,85,247,0.5)"
                 strokeWidth="2"
                 className="drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]"
               />
-              <motion.path 
+              <motion.path
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 2, delay: 1 }}
-                d="M0,80 Q10,70 20,85 T40,60 T60,40 T80,50 T100,20 L100,100 L0,100 Z" 
-                fill="url(#gradient)" 
+                d="M0,80 Q10,70 20,85 T40,60 T60,40 T80,50 T100,20 L100,100 L0,100 Z"
+                fill="url(#gradient)"
               />
               <defs>
                 <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
@@ -649,9 +666,9 @@ const Analytics = () => {
               </defs>
             </svg>
             <div className="absolute inset-0 flex justify-between items-end pb-2 px-1">
-               {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'].map((s, i) => (
-                 <span key={i} className="text-[10px] text-white/30 font-mono">{s}</span>
-               ))}
+              {['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'].map((s, i) => (
+                <span key={i} className="text-[10px] text-white/30 font-mono">{s}</span>
+              ))}
             </div>
           </div>
         </SpotlightCard>
@@ -711,7 +728,7 @@ const SettingsView = () => {
                   <div className="text-xs text-white/50 mt-1">{setting.desc}</div>
                 </div>
                 <div className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${i === 2 ? 'bg-purple-500' : 'bg-white/10'}`}>
-                  <motion.div 
+                  <motion.div
                     layout
                     className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm ${i === 2 ? 'right-0.5' : 'left-0.5'}`}
                   />
