@@ -19,7 +19,7 @@ export async function runProspectingSync() {
         // Using the specific model requested by the user
         // Note: For grounding, current SDK might need a specific structure
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
         });
 
         const prompt = `
