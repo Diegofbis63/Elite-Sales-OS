@@ -32,14 +32,14 @@ export async function getDashboardStats() {
         const allProspects = await db.select().from(prospects);
 
         // In search of "Hot" prospects (interested)
-        const hotProspects = allProspects.filter(p => p.status === 'Interested' || p.status === 'Interested').length;
+        const hotProspects = allProspects.filter(p => p.status === 'interested').length;
 
         // Conversion rate (Closed / Total)
-        const closedCount = allProspects.filter(p => p.status === 'Closed').length;
+        const closedCount = allProspects.filter(p => p.status === 'closed').length;
         const conversionRate = allProspects.length > 0 ? (closedCount / allProspects.length) * 100 : 0;
 
         // Messages sent (Total contacted)
-        const messagesSent = allProspects.filter(p => p.status !== 'Cold').length;
+        const messagesSent = allProspects.filter(p => p.status !== 'cold').length;
 
         // Projected Revenue (Demo logic: $5000 per closed deal)
         const projectedRevenue = closedCount * 5000;
@@ -79,10 +79,10 @@ export async function syncProspects(query: string = "clínicas estéticas en Có
     }
 }
 
-export async function updateProspectStatus(id: number, status: string) {
+export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
     try {
         await db.update(prospects)
-            .set({ status: status as any, lastInteraction: new Date() })
+            .set({ status: status, lastInteraction: new Date() })
             .where(eq(prospects.id, id));
         revalidatePath("/");
         return { success: true };

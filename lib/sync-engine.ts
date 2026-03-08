@@ -1,68 +1,79 @@
 import { db } from "@/db";
 import { prospects, syncHistory } from "@/db/schema";
-import { GoogleGenAI } from "@google/genai";
 import { eq } from "drizzle-orm";
 
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+
 export async function runProspectingSync(query: string = "clínicas estéticas en Córdoba Argentina") {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.error("No Gemini API key found");
+    if (!GOOGLE_MAPS_API_KEY) {
+        console.error("No Google Maps API key found");
         return { success: false, error: "Missing API Key" };
     }
 
-    const genAI = new GoogleGenAI({ apiKey });
-    // This package seems to use .models for interaction
+    const queries = [
+        "clínicas estéticas en Córdoba Argentina",
+        "estética avanzada en Córdoba Argentina",
+        "clínicas médicas privadas en Córdoba Argentina",
+        "estudios jurídicos corporativos en Córdoba Argentina",
+        "inmobiliarias de lujo en Córdoba Argentina",
+        "concesionarias de autos de alta gama en Córdoba Argentina"
+    ];
+
+    let totalLeadsAdded = 0;
+
     try {
-        const prompt = `Actúa como un experto en prospección B2B. Encuentra 10 negocios reales en ${query} que NO TENGAN SITIO WEB o tengan uno muy básico. 
-    Devuelve un JSON con el siguiente formato:
-    [
-      {
-        "name": "Nombre",
-        "businessName": "Nombre Empresa",
-        "phone": "Teléfono con código de país",
-        "industry": "Industria",
-        "rating": 4.5,
-        "hasWebsite": false,
-        "googleMapsId": "ID_UNICO_MAPS_SIMULADO_O_REAL"
-      }
-    ]
-    Importante: Solo devuelve el JSON, nada más.`;
+        for (const q of queries) {
+            const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(q)}&key=${GOOGLE_MAPS_API_KEY}`;
+            const response = await fetch(url);
+            const data = await response.json();
 
-        const result = await (genAI as any).models.generateContent({
-            model: "gemini-2.0-flash",
-            contents: prompt
-        });
-        const text = result.text || result.response?.text() || "";
+            if (data.status === "OK") {
+                for (const result of data.results) {
+                    // Filter: Rating > 4.0
+                    if (result.rating && result.rating > 4.0) {
 
+                        // Check if it has a website (need Place Details for more accuracy, but textsearch returns some info)
+                        // Or better, we fetch Place Details for each high-rated candidate to check website
+                        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${result.place_id}&fields=name,formatted_phone_number,website,rating,types,editorial_summary&key=${GOOGLE_MAPS_API_KEY}`;
+                        const detailsRes = await fetch(detailsUrl);
+                        const details = await detailsRes.json();
 
-        // Clean JSON string if Gemini adds markdown markers
-        const jsonStr = text.replace(/```json|```/g, "").trim();
-        const leads = JSON.parse(jsonStr);
+                        if (details.status === "OK") {
+                            const place = details.result;
 
-        let leadsAdded = 0;
+                            // Only businesses WITHOUT website
+                            if (!place.website) {
+                                // Deduplication
+                                const existing = await db.query.prospects.findFirst({
+                                    where: eq(prospects.googleMapsId, result.place_id),
+                                });
 
-        for (const lead of leads) {
-            // Deduplication check
-            const existing = await db.query.prospects.findFirst({
-                where: eq(prospects.googleMapsId, lead.googleMapsId),
-            });
-
-            if (!existing) {
-                await db.insert(prospects).values({
-                    ...lead,
-                    status: 'cold',
-                    createdAt: new Date(),
-                });
-                leadsAdded++;
+                                if (!existing) {
+                                    await db.insert(prospects).values({
+                                        name: place.name,
+                                        businessName: place.name,
+                                        phone: place.formatted_phone_number || 'S/D',
+                                        industry: place.types?.[0] || 'Business',
+                                        rating: place.rating || 0,
+                                        hasWebsite: false,
+                                        googleMapsId: result.place_id,
+                                        status: 'cold',
+                                    });
+                                    totalLeadsAdded++;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
         await db.insert(syncHistory).values({
             status: 'success',
-            leadsFound: leadsAdded,
+            leadsFound: totalLeadsAdded,
         });
 
-        return { success: true, leadsAdded };
+        return { success: true, leadsAdded: totalLeadsAdded };
     } catch (error) {
         console.error("Sync error:", error);
         await db.insert(syncHistory).values({

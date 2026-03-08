@@ -110,7 +110,7 @@ const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, onClose
         setIsSending(true);
         // Simulate sending
         setTimeout(async () => {
-            await updateProspectStatus(prospect.id, 'Contacted');
+            await updateProspectStatus(prospect.id, 'contacted');
             setIsSending(false);
             onClose();
         }, 2000);
@@ -519,7 +519,7 @@ const ProspectsView = () => {
                                     >
                                         <td className="px-8 py-6">
                                             <div className="text-[12px] font-serif tracking-widest text-white/90 group-hover:text-white transition-colors uppercase">{p.businessName || p.name}</div>
-                                            <div className="text-[9px] text-white/30 mt-1 uppercase tracking-tighter">ID: MAPS_0{p.id}</div>
+                                            <div className="text-[9px] text-white/30 mt-1 uppercase tracking-tighter">ID: {p.id.slice(0, 8)}</div>
                                         </td>
                                         <td className="px-8 py-6 text-[10px] text-white/50 lowercase tracking-widest">/ {p.industry || 'General'}</td>
                                         <td className="px-8 py-6">
