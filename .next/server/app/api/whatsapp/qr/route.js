@@ -1,6 +1,1 @@
-var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/whatsapp/qr/route.js")
-R.c("server/chunks/[root-of-the-server]__0f0f12e3._.js")
-R.c("server/chunks/[root-of-the-server]__f408c708._.js")
-R.c("server/chunks/_next-internal_server_app_api_whatsapp_qr_route_actions_a28960b2.js")
-R.m(53269)
-module.exports=R.m(53269).exports
+"use strict";(()=>{var e={};e.id=319,e.ids=[319],e.modules={399:e=>{e.exports=require("next/dist/compiled/next-server/app-page.runtime.prod.js")},517:e=>{e.exports=require("next/dist/compiled/next-server/app-route.runtime.prod.js")},4591:(e,t,r)=>{r.r(t),r.d(t,{originalPathname:()=>h,patchFetch:()=>q,requestAsyncStorage:()=>d,routeModule:()=>u,serverHooks:()=>l,staticGenerationAsyncStorage:()=>c});var a={};r.r(a),r.d(a,{GET:()=>n});var p=r(9303),s=r(8716),i=r(670),o=r(7070);async function n(){return o.NextResponse.json({qr:"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=EliteSalesOSLink"})}let u=new p.AppRouteRouteModule({definition:{kind:s.x.APP_ROUTE,page:"/api/whatsapp/qr/route",pathname:"/api/whatsapp/qr",filename:"route",bundlePath:"app/api/whatsapp/qr/route"},resolvedPagePath:"E:\\Antigravity Projects\\Elite-Sales-OS\\app\\api\\whatsapp\\qr\\route.ts",nextConfigOutput:"",userland:a}),{requestAsyncStorage:d,staticGenerationAsyncStorage:c,serverHooks:l}=u,h="/api/whatsapp/qr/route";function q(){return(0,i.patchFetch)({serverHooks:l,staticGenerationAsyncStorage:c})}}};var t=require("../../../../webpack-runtime.js");t.C(e);var r=e=>t(t.s=e),a=t.X(0,[276,972],()=>r(4591));module.exports=a})();

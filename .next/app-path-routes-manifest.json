@@ -1,7 +1,1 @@
-{
-  "/_global-error/page": "/_global-error",
-  "/_not-found/page": "/_not-found",
-  "/api/cron/sync/route": "/api/cron/sync",
-  "/api/whatsapp/qr/route": "/api/whatsapp/qr",
-  "/page": "/"
-}
+{"/_not-found/page":"/_not-found","/api/cron/sync/route":"/api/cron/sync","/api/whatsapp/qr/route":"/api/whatsapp/qr","/page":"/"}
