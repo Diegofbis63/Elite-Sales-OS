@@ -3,9 +3,10 @@ import { prospects, sync_history } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
 export async function runProspectingSync() {
+    const rawKey = process.env.GEMINI_API_KEY;
+    const GEMINI_API_KEY = rawKey ? rawKey.trim() : null;
+
     console.log("🚀 Starting AI Prospecting Sync (Gemini Search Grounding)...");
 
     if (!GEMINI_API_KEY) {
