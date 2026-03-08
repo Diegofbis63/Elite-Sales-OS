@@ -1,60 +1,41 @@
 import { db } from "@/db";
 import { prospects, sync_history } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { google } from '@ai-sdk/google';
+import { generateObject } from 'ai';
+import { z } from 'zod';
 
 export async function runProspectingSync() {
-    const rawKey = process.env.GEMINI_API_KEY;
-    const GEMINI_API_KEY = rawKey ? rawKey.trim() : null;
-
-    console.log("🚀 Starting AI Prospecting Sync (Gemini Search Grounding)...");
-
-    if (!GEMINI_API_KEY) {
-        console.error("❌ No Gemini API key found");
-        return { success: false, error: "Missing GEMINI_API_KEY" };
-    }
+    console.log("🚀 Starting AI Prospecting Sync (Vercel AI SDK + Google Search Tool)...");
 
     try {
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        // Using the specific model requested by the user
-        // Note: For grounding, current SDK might need a specific structure
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+        const { object } = await generateObject({
+            model: google('gemini-1.5-flash'), // Using a very stable model for search
+            schema: z.object({
+                leads: z.array(z.object({
+                    name: z.string(),
+                    business_name: z.string(),
+                    phone: z.string(),
+                    industry: z.string(),
+                    rating: z.number(),
+                    has_website: z.boolean(),
+                    maps_id: z.string(),
+                }))
+            }),
+            prompt: `
+                Actúa como un experto en prospección B2B de élite. 
+                Tu misión es localizar 5 negocios reales y operativos en Córdoba, Argentina (Inmobiliarias, Estéticas de Lujo o Clínicas Privadas).
+                
+                REQUISITOS OBLIGATORIOS:
+                1. NO deben tener sitio web oficial (o debe ser inaccesible).
+                2. Deben tener un Rating > 4.2 en Google Maps con reseñas reales.
+                3. Los teléfonos deben estar en formato internacional (+54...).
+                4. Debes extraer un identificador único real (Place ID o similar) para maps_id.
+
+                USA TUS HERRAMIENTAS DE BÚSQUEDA PARA VALIDAR LA EXISTENCIA DE ESTOS NEGOCIOS HOY. No inventes datos.
+            `,
         });
 
-        const prompt = `
-            Actúa como un experto en prospección B2B de élite. 
-            Tu misión es localizar 5 negocios reales y operativos en Córdoba, Argentina (Inmobiliarias, Estéticas de Lujo o Clínicas Privadas).
-            
-            REQUISITOS OBLIGATORIOS:
-            1. NO deben tener sitio web oficial (o debe ser inaccesible).
-            2. Deben tener un Rating > 4.2 en Google Maps con reseñas reales.
-            3. Devuelve los datos en un bloque JSON puro (un array de objetos) con los campos: 
-               name, business_name, phone (formato +54...), industry, rating (numérico), has_website: false, maps_id (Place ID o Identificador Único).
-
-            USA GOOGLE SEARCH GROUNDING PARA VALIDAR LA EXISTENCIA DE ESTOS NEGOCIOS HOY. No inventes datos.
-        `;
-
-        const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            tools: [
-                { googleSearchRetrieval: {} } as any
-            ]
-        });
-
-        const responseText = result.response.text();
-        console.log("AI Context received. Raw Text Length:", responseText.length);
-
-        // Limpiar el texto para extraer solo el JSON si viene con markdown
-        const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonMatch = cleanedText.match(/\[[\s\S]*\]/);
-
-        if (!jsonMatch) {
-            console.error("DEBUG: Response text received:", responseText);
-            throw new Error(`El motor de IA no devolvió un formato JSON válido. Respuesta: ${responseText.substring(0, 100)}...`);
-        }
-
-        const leads = JSON.parse(jsonMatch[0]);
+        const leads = object.leads;
         let totalLeadsAdded = 0;
 
         for (const lead of leads) {
