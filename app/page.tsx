@@ -79,6 +79,27 @@ const SpotlightCard = ({ children, className = '', delay = 0, neon = true }: { c
     );
 };
 
+// --- Global Spotlight ---
+const GlobalSpotlight = () => {
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            setMousePos({ x: e.clientX, y: e.clientY });
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
+
+    return (
+        <div
+            className="fixed inset-0 pointer-events-none z-[100] transition-opacity duration-300"
+            style={{
+                background: `radial-gradient(circle at ${mousePos.x}px ${mousePos.y}px, rgba(34,211,238,0.03) 0%, transparent 600px)`,
+            }}
+        />
+    );
+};
+
 // --- WhatsApp Modal Component ---
 const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, onClose: () => void, prospect: any }) => {
     const [step, setStep] = useState(1);
@@ -656,10 +677,11 @@ const TemplatesView = () => {
 
 const Layout = ({ children, currentRoute, setCurrentRoute }: { children: React.ReactNode, currentRoute: string, setCurrentRoute: (r: string) => void }) => {
     return (
-        <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans">
+        <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans selection:bg-cyan-500/30">
+            <GlobalSpotlight />
             <Sidebar currentRoute={currentRoute} setCurrentRoute={setCurrentRoute} />
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-white/[0.015] blur-[150px] rounded-full pointer-events-none" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-cyan-500/[0.02] blur-[150px] rounded-full pointer-events-none" />
                 <Header />
                 <main className="flex-1 overflow-y-auto p-8 lg:p-14 relative z-10 custom-scrollbar">
                     {children}
@@ -685,9 +707,12 @@ export default function App() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === 'elite2024') { // Contraseña de ejemplo
+        const validPass = process.env.NEXT_PUBLIC_PASSCODE || 'elite2024';
+        if (password === validPass) {
             localStorage.setItem('elite_session', 'active');
             setIsAuthenticated(true);
+        } else {
+            alert("Acceso denegado: Código inválido.");
         }
     };
 
