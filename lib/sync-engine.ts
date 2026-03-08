@@ -13,7 +13,7 @@ export async function runProspectingSync() {
     try {
         // Inicializamos el modelo de próxima generación solicitado con capacidades de búsqueda
         const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash",
+            model: "gemini-3-flash-preview",
             tools: [
                 {
                     // @ts-ignore - Soporte para búsqueda web en tiempo real
