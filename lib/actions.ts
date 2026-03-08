@@ -1,3 +1,5 @@
+"use server";
+
 import { db } from '../db';
 import { prospects, outbox, message_templates, sync_history } from '../db/schema';
 import { desc, eq } from 'drizzle-orm';
@@ -38,7 +40,6 @@ export async function verifyConnection() {
 }
 
 export async function syncProspects() {
-    "use server";
     return await runProspectingSync();
 }
 
@@ -74,7 +75,6 @@ export async function getProspects() {
 }
 
 export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
-    "use server";
     try {
         // @ts-ignore
         await db.update(prospects).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
@@ -86,7 +86,6 @@ export async function updateProspectStatus(id: string, status: 'cold' | 'contact
 
 // --- Outbox (WhatsApp Bridge) ---
 export async function queueMessage(phone: string, message: string, mediaUrl?: string) {
-    "use server";
     try {
         // @ts-ignore
         await db.insert(outbox).values({
@@ -121,7 +120,6 @@ export async function getTemplates() {
 
 // --- Multimedia (Cloudinary) ---
 export async function uploadToCloudinary(formData: FormData) {
-    "use server";
     try {
         const file = formData.get('file') as File;
         if (!file) throw new Error('No file provided');
