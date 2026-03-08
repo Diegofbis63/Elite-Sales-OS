@@ -1,11 +1,18 @@
 import { db } from '../db';
 import { prospects, outbox, message_templates, sync_history } from '../db/schema';
 import { desc, eq } from 'drizzle-orm';
+import { v2 as cloudinary } from 'cloudinary';
+import { runProspectingSync } from './sync-engine';
 
-// --- Verification Action ---
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// --- Verification & Sync ---
 export async function verifyConnection() {
     try {
-        // Try to insert a dummy prospect
         const testId = crypto.randomUUID();
         await db.insert(prospects).values({
             id: testId,
@@ -15,7 +22,6 @@ export async function verifyConnection() {
             maps_id: `test_${Date.now()}`
         });
 
-        // Try to read it back
         const result = await db.query.prospects.findFirst({
             where: eq(prospects.id, testId)
         });
@@ -28,6 +34,11 @@ export async function verifyConnection() {
         console.error("DB Verification Error:", error);
         return { success: false, message: error.message || "Connection failed." };
     }
+}
+
+export async function syncProspects() {
+    "use server";
+    return await runProspectingSync();
 }
 
 // --- Prospects ---
@@ -62,6 +73,7 @@ export async function getProspects() {
 }
 
 export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
+    "use server";
     try {
         await db.update(prospects).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
         return { success: true };
@@ -72,6 +84,7 @@ export async function updateProspectStatus(id: string, status: 'cold' | 'contact
 
 // --- Outbox (WhatsApp Bridge) ---
 export async function queueMessage(phone: string, message: string, mediaUrl?: string) {
+    "use server";
     try {
         await db.insert(outbox).values({
             phone,
@@ -94,12 +107,41 @@ export async function getTemplates() {
             return [{
                 id: crypto.randomUUID(),
                 title: "Liquid Luxury - Contacto",
-                content: "Hola {nombre}, vimos tu negocio {negocio} y..."
+                content: "Hola {nombre}, vimos tu negocio {negocio} y tenemos una propuesta..."
             }];
         }
         return t;
     } catch (error) {
         return [];
+    }
+}
+
+// --- Multimedia (Cloudinary) ---
+export async function uploadToCloudinary(formData: FormData) {
+    "use server";
+    try {
+        const file = formData.get('file') as File;
+        if (!file) throw new Error('No file provided');
+
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                {
+                    resource_type: 'auto',
+                    upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve({ success: true, url: result?.secure_url });
+                }
+            );
+            stream.end(buffer);
+        });
+    } catch (error: any) {
+        console.error("Cloudinary error:", error);
+        return { success: false, error: error.message };
     }
 }
 
