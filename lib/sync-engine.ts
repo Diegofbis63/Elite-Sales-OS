@@ -20,7 +20,32 @@ interface SyncResult {
     note?: string;
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || "");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
+async function getLeadsFromMapsAPI(): Promise<Lead[]> {
+    console.log("🛠️ FALLBACK SELECTO: Activando Motor de Código Puro (Google Maps API)...");
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) throw new Error("GOOGLE_MAPS_API_KEY no detectada.");
+
+    // Búsqueda específica en Córdoba
+    const query = encodeURIComponent("clinicas estetica cordoba argentina");
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${apiKey}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+        console.log("⚠️ Maps API no devolvió resultados en este ciclo.");
+        return [];
+    }
+
+    // Filtrar y mapear a formato Lead
+    return data.results.map((place: any) => ({
+        business_name: place.name,
+        phone: place.formatted_phone_number || "Fijar en Maps",
+        name: "Gerencia"
+    })).slice(0, 12);
+}
 
 async function injectLeads(leads: Lead[], source: string): Promise<number> {
     let totalLeadsAdded = 0;
@@ -55,53 +80,58 @@ async function injectLeads(leads: Lead[], source: string): Promise<number> {
 }
 
 export async function runProspectingSync(): Promise<SyncResult> {
-    console.log(`🚀 PROTOCOLO ELITE: Activando Motor Gemini 2.0 Flash (Máxima Compatibilidad)...`);
+    console.log(`🚀 PROTOCOLO HÍBRIDO: Iniciando ciclo inteligente...`);
 
-    const prompt = `Busca en Google Maps y en la web 15 negocios locales reales en Córdoba Capital, Argentina (estética, salud, legal o inmobiliaria). REGLAS: 1. Teléfono público visible. 2. SIN sitio web propio. Devuelve SOLO JSON: { "leads": [{ "name", "business_name", "phone" }] }`;
+    const prompt = `Busca en Google Maps 12 negocios locales reales en Córdoba Capital, Argentina (estética, salud, legal o inmobiliaria) SIN sitio web. Devuelve SOLO JSON: { "leads": [{ "name", "business_name", "phone" }] }`;
 
     try {
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash",
-            tools: [{ googleSearchRetrieval: {} }] as any
+            tools: [{ googleSearchRetrieval: {} } as any]
         });
 
         const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text().replace(/```json|```/g, "").trim();
+        const text = result.response.text().replace(/```json|```/g, "").trim();
 
-        console.log("💎 AI RESPONSE RECEIVED:", text.substring(0, 100) + "...");
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("IA no devolvió JSON válido.");
 
-        const data = JSON.parse(text) as SyncResponse;
-        if (!data.leads || !Array.isArray(data.leads)) throw new Error("JSON Inválido");
-
-        const totalLeadsAdded = await injectLeads(data.leads, "Gemini 2.0 Flash");
-
-        await db.insert(sync_history).values({
-            status: 'success',
-            leads_found: totalLeadsAdded
-        });
+        const data = JSON.parse(jsonMatch[0]) as SyncResponse;
+        const totalLeadsAdded = await injectLeads(data.leads, "Gemini 2.0 (IA)");
 
         return { success: true, leadsAdded: totalLeadsAdded };
 
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error("❌ FALLO MOTOR PRINCIPAL:", errorMessage);
+        console.error("❌ FALLO MOTOR IA:", errorMessage);
 
-        if (errorMessage.includes('429') || errorMessage.includes('404')) {
-            console.log("⚠️ Activando Motor de Emergencia (1.5 Flash)...");
+        // Si es cuota o fallo de red, ir a CÓDIGO PURO
+        if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('fetch')) {
             try {
-                const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                const fResult = await fallbackModel.generateContent(prompt);
-                const fText = fResult.response.text().replace(/```json|```/g, "").trim();
-                const fData = JSON.parse(fText) as SyncResponse;
-                const added = await injectLeads(fData.leads, "Gemini 1.5 Flash (Fallback)");
-                return { success: true, leadsAdded: added, note: "Sincronizado vía motor de emergencia." };
-            } catch (fErr: unknown) {
-                const fErrorMessage = fErr instanceof Error ? fErr.message : String(fErr);
-                return { success: false, error: `Error total de cuota: ${fErrorMessage}` };
+                const mapsLeads = await getLeadsFromMapsAPI();
+                if (mapsLeads.length > 0) {
+                    const added = await injectLeads(mapsLeads, "Maps API (Código Puro)");
+                    return { success: true, leadsAdded: added, note: "Pánico de cuota IA activado: Sintonizado vía Maps API directa." };
+                }
+            } catch (mapsErr: unknown) {
+                console.error("❌ FALLO MOTOR CÓDIGO PURO:", mapsErr);
             }
         }
 
-        return { success: false, error: `Error de Protocolo: ${errorMessage}` };
+        // Último intento con 1.5 Flash sin herramientas (Grounding suele ser el problema de cuota)
+        try {
+            console.log("⚠️ Intento final con Gemini 1.5 (Sin Grounding)...");
+            const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const fResult = await fallbackModel.generateContent(prompt);
+            const fText = fResult.response.text().replace(/```json|```/g, "").trim();
+            const fJsonMatch = fText.match(/\{[\s\S]*\}/);
+            if (!fJsonMatch) throw new Error("Fallback falló.");
+
+            const fData = JSON.parse(fJsonMatch[0]) as SyncResponse;
+            const added = await injectLeads(fData.leads, "Gemini 1.5 (Fallback)");
+            return { success: true, leadsAdded: added, note: "Resiliencia crítica: Motor fallback activado." };
+        } catch (fErr: any) {
+            return { success: false, error: `Protocolo Totalmente Superado: Cuota agotada en todos los motores.` };
+        }
     }
 }
