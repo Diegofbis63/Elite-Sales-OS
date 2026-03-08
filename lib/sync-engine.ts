@@ -9,7 +9,7 @@ export async function runProspectingSync() {
 
     try {
         const { object } = await generateObject({
-            model: google('gemini-2.5-flash'), // Using gemini-2.5-flash as 1.5 is no longer available
+            model: google('gemini-2.0-flash'),
             schema: z.object({
                 leads: z.array(z.object({
                     name: z.string(),
@@ -23,15 +23,14 @@ export async function runProspectingSync() {
             }),
             prompt: `
                 Actúa como un experto en prospección B2B de élite. 
-                Tu misión es localizar 5 negocios reales y operativos en Córdoba, Argentina (Inmobiliarias, Estéticas de Lujo o Clínicas Privadas).
+                Busca en Google negocios reales y operativos en Córdoba, Argentina.
+                Categorías: Inmobiliarias, Estéticas de Lujo o Clínicas Privadas.
                 
                 REQUISITOS OBLIGATORIOS:
-                1. NO deben tener sitio web oficial (o debe ser inaccesible).
-                2. Deben tener un Rating > 4.2 en Google Maps con reseñas reales.
+                1. NO deben tener sitio web oficial (valídalo buscando su nombre).
+                2. Deben tener un Rating > 4.2 en Google Maps.
                 3. Los teléfonos deben estar en formato internacional (+54...).
-                4. Debes extraer un identificador único real (Place ID o similar) para maps_id.
-
-                USA TUS HERRAMIENTAS DE BÚSQUEDA PARA VALIDAR LA EXISTENCIA DE ESTOS NEGOCIOS HOY. No inventes datos.
+                4. Extrae 5 negocios únicos.
             `,
         });
 

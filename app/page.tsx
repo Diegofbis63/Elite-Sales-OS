@@ -752,8 +752,56 @@ export default function App() {
             {currentRoute === 'dashboard' && <Dashboard />}
             {currentRoute === 'prospects' && <ProspectsList />}
             {currentRoute === 'templates' && <TemplatesList />}
-            {currentRoute === 'analytics' && <div className="text-white/20 font-serif italic p-10 flex items-center gap-4 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> Escaneando métricas de profundidad...</div>}
-            {currentRoute === 'settings' && <div className="text-white/20 font-serif italic p-10 flex items-center gap-4 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> Sincronizando presets de servidor...</div>}
+            {currentRoute === 'analytics' && <AnalyticsView stats={stats} />}
+            {currentRoute === 'settings' && <SettingsView />}
         </Layout>
     );
 }
+
+// --- Specific Views ---
+
+const AnalyticsView = ({ stats }: { stats: any }) => (
+    <div className="space-y-12 animate-in fade-in duration-700">
+        <h2 className="text-4xl font-serif font-light tracking-tight text-white/90">Performance <span className="text-white/20 italic">Metrics</span></h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <SpotlightCard className="p-10 h-80 flex flex-col justify-center items-center">
+                <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] mb-10">Eficiencia de Conversión</p>
+                <div className="text-6xl font-serif text-cyan-400">{stats?.conversionRate || '0%'}</div>
+                <p className="text-[9px] text-white/20 uppercase tracking-widest mt-6">Basado en {stats?.totalProspects || 0} entidades</p>
+            </SpotlightCard>
+            <SpotlightCard className="p-10 h-80 flex flex-col justify-center items-center">
+                <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] mb-10">Alcance de Red</p>
+                <div className="text-6xl font-serif text-white">{stats?.messagesSent || 0}</div>
+                <p className="text-[9px] text-white/20 uppercase tracking-widest mt-6">Envíos validados por Outbox</p>
+            </SpotlightCard>
+        </div>
+    </div>
+);
+
+const SettingsView = () => (
+    <div className="space-y-12 animate-in fade-in duration-700">
+        <h2 className="text-4xl font-serif font-light tracking-tight text-white/90">System <span className="text-white/20 italic">Protocol</span></h2>
+        <div className="max-w-2xl space-y-6">
+            <SpotlightCard className="p-10 space-y-8">
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">API Core (Gemini 2.5)</span>
+                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_green]" />
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">Storage Bridge (Neon)</span>
+                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_green]" />
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">CDN Services (Cloudinary)</span>
+                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_green]" />
+                </div>
+            </SpotlightCard>
+            <button
+                onClick={() => { localStorage.removeItem('elite_session'); window.location.reload(); }}
+                className="px-8 py-4 bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-[0.3em] rounded-xl hover:bg-red-500/20 transition-all"
+            >
+                Terminar Sesión Segura
+            </button>
+        </div>
+    </div>
+);
