@@ -342,10 +342,20 @@ const Dashboard = () => {
 
     const handleSync = async () => {
         setIsSyncing(true);
-        await syncProspects();
-        const newStats = await getDashboardStats();
-        setStats(newStats);
-        setIsSyncing(false);
+        try {
+            const result: any = await syncProspects();
+            if (result.success) {
+                alert(`SINCRONIZACIÓN EXITOSA: Se han localizado ${result.leadsAdded} nuevos prospectos de alta fidelidad.`);
+            } else {
+                alert(`ERROR DE PROTOCOLO: ${result.error || 'Fallo desconocido en el motor de IA'}`);
+            }
+            const newStats = await getDashboardStats();
+            setStats(newStats);
+        } catch (err) {
+            alert(`EXCEPCIÓN CRÍTICA: ${err}`);
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
     const kpiData = [
