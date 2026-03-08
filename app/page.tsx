@@ -946,7 +946,7 @@ const SettingsView = () => (
         <div className="max-w-2xl space-y-6">
             <SpotlightCard className="p-10 space-y-8">
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">API Core (Gemini 3 Flash - Next Gen)</span>
+                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">API Core (Gemini 3.1 Flash Lite - High Capacity)</span>
                     <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_green]" />
                 </div>
                 <div className="flex items-center justify-between">
