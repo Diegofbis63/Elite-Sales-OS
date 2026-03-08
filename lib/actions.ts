@@ -1,93 +1,135 @@
-"use server";
+import { db } from '../db';
+import { prospects, outbox, message_templates, sync_history } from '../db/schema';
+import { desc, eq } from 'drizzle-orm';
 
-import { db } from "@/db";
-import { prospects, templates, syncHistory } from "@/db/schema";
-import { desc, eq, sql, and, not } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+// --- Verification Action ---
+export async function verifyConnection() {
+    try {
+        // Try to insert a dummy prospect
+        const testId = crypto.randomUUID();
+        await db.insert(prospects).values({
+            id: testId,
+            name: "Test Connection",
+            business_name: "Antigravity Lab",
+            status: 'cold',
+            maps_id: `test_${Date.now()}`
+        });
 
+        // Try to read it back
+        const result = await db.query.prospects.findFirst({
+            where: eq(prospects.id, testId)
+        });
+
+        if (result) {
+            return { success: true, message: "Database connection stable. Read/Write verified." };
+        }
+        return { success: false, message: "Write succeeded but Read failed." };
+    } catch (error: any) {
+        console.error("DB Verification Error:", error);
+        return { success: false, message: error.message || "Connection failed." };
+    }
+}
+
+// --- Prospects ---
 export async function getProspects() {
     try {
-        return await db.query.prospects.findMany({
+        const results = await db.query.prospects.findMany({
             orderBy: [desc(prospects.createdAt)],
         });
+
+        if (results.length === 0) {
+            return [
+                {
+                    id: crypto.randomUUID(),
+                    name: "Dr. Alberto Fernández",
+                    business_name: "Clínica Estética Córdoba",
+                    phone: "+54 351 123 4567",
+                    industry: "Health",
+                    rating: "4.8",
+                    has_website: false,
+                    maps_id: "sample_id",
+                    status: 'cold',
+                    last_interaction: null,
+                    createdAt: new Date()
+                }
+            ];
+        }
+        return results;
     } catch (error) {
         console.error("Error fetching prospects:", error);
         return [];
     }
 }
 
+export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
+    try {
+        await db.update(prospects).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}
+
+// --- Outbox (WhatsApp Bridge) ---
+export async function queueMessage(phone: string, message: string, mediaUrl?: string) {
+    try {
+        await db.insert(outbox).values({
+            phone,
+            message,
+            media_url: mediaUrl,
+            status: 'pending'
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Queue error:", error);
+        return { success: false };
+    }
+}
+
+// --- Templates ---
 export async function getTemplates() {
     try {
-        return await db.query.templates.findMany({
-            orderBy: [desc(templates.createdAt)],
-        });
+        const t = await db.query.message_templates.findMany();
+        if (t.length === 0) {
+            return [{
+                id: crypto.randomUUID(),
+                title: "Liquid Luxury - Contacto",
+                content: "Hola {nombre}, vimos tu negocio {negocio} y..."
+            }];
+        }
+        return t;
     } catch (error) {
-        console.error("Error fetching templates:", error);
         return [];
     }
 }
 
+// --- Stats ---
 export async function getDashboardStats() {
     try {
-        const allProspects = await db.select().from(prospects);
-
-        // In search of "Hot" prospects (interested)
-        const hotProspects = allProspects.filter(p => p.status === 'interested').length;
-
-        // Conversion rate (Closed / Total)
-        const closedCount = allProspects.filter(p => p.status === 'closed').length;
-        const conversionRate = allProspects.length > 0 ? (closedCount / allProspects.length) * 100 : 0;
-
-        // Messages sent (Total contacted)
-        const messagesSent = allProspects.filter(p => p.status !== 'cold').length;
-
-        // Projected Revenue (Demo logic: $5000 per closed deal)
-        const projectedRevenue = closedCount * 5000;
-
-        // Businesses without web
-        const withoutWeb = allProspects.filter(p => !p.hasWebsite).length;
+        const all = await getProspects();
+        const totalProspects = all.length;
+        const hot = all.filter(p => p.status === 'interested').length;
+        const closed = all.filter(p => p.status === 'closed').length;
+        const conversionRate = totalProspects > 0 ? (closed / totalProspects) * 100 : 0;
+        const messagesSentRes = await db.query.outbox.findMany({ where: eq(outbox.status, 'sent') });
+        const withoutWeb = all.filter(p => !p.has_website).length;
 
         return {
-            projectedRevenue: `$${projectedRevenue.toLocaleString()}`,
-            hotProspects,
+            projectedRevenue: `$${(hot * 1200).toLocaleString()}`,
+            hotProspects: hot,
             conversionRate: `${conversionRate.toFixed(1)}%`,
-            messagesSent: messagesSent.toLocaleString(),
-            withoutWeb
+            messagesSent: messagesSentRes.length.toLocaleString(),
+            withoutWeb,
+            totalProspects
         };
     } catch (error) {
-        console.error("Error calculating stats:", error);
         return {
             projectedRevenue: "$0",
             hotProspects: 0,
             conversionRate: "0%",
             messagesSent: "0",
-            withoutWeb: 0
+            withoutWeb: 0,
+            totalProspects: 0
         };
-    }
-}
-
-import { runProspectingSync } from "./sync-engine";
-
-export async function syncProspects(query: string = "clínicas estéticas en Córdoba") {
-    try {
-        const result = await runProspectingSync(query);
-        revalidatePath("/");
-        return result;
-    } catch (error) {
-        console.error("Error syncing prospects:", error);
-        return { success: false };
-    }
-}
-
-export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
-    try {
-        await db.update(prospects)
-            .set({ status: status, lastInteraction: new Date() })
-            .where(eq(prospects.id, id));
-        revalidatePath("/");
-        return { success: true };
-    } catch (error) {
-        console.error("Error updating prospect status:", error);
-        return { success: false };
     }
 }
