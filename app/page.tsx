@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
-import { getProspects, getTemplates, getDashboardStats, syncProspects, updateProspectStatus } from '@/lib/actions';
+import { getProspects, getTemplates, getDashboardStats, syncProspects, updateProspectStatus, queueMessage, uploadToCloudinary } from '@/lib/actions';
 
 // --- Components ---
 
@@ -101,19 +101,38 @@ const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, onClose
     const handleSelectTemplate = (tpl: any) => {
         setSelectedTemplate(tpl);
         let msg = tpl.content.replace('{nombre}', prospect.name || 'Cliente');
-        msg = msg.replace('{negocio}', prospect.businessName || 'su negocio');
+        msg = msg.replace('{negocio}', prospect.business_name || 'su negocio');
         setCustomMessage(msg);
         setStep(2);
     };
 
     const handleSend = async () => {
         setIsSending(true);
-        // Simulate sending
-        setTimeout(async () => {
-            await updateProspectStatus(prospect.id, 'contacted');
+        try {
+            let mediaUrl = undefined;
+            if (media) {
+                const formData = new FormData();
+                formData.append('file', media);
+                const uploadRes: any = await uploadToCloudinary(formData);
+                if (uploadRes.success) {
+                    mediaUrl = uploadRes.url;
+                } else {
+                    console.error("Upload failed:", uploadRes.error);
+                }
+            }
+
+            const result = await queueMessage(prospect.phone, customMessage, mediaUrl);
+            if (result.success) {
+                await updateProspectStatus(prospect.id, 'contacted');
+                onClose();
+            } else {
+                alert("Error al encolar el mensaje en el Outbox");
+            }
+        } catch (error) {
+            console.error("Error en el Bridge de WhatsApp:", error);
+        } finally {
             setIsSending(false);
-            onClose();
-        }, 2000);
+        }
     };
 
     if (!isOpen) return null;
