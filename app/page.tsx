@@ -667,15 +667,22 @@ const Layout = ({ children, currentRoute, setCurrentRoute }: { children: React.R
     );
 };
 
+interface DashboardStats {
+    projectedRevenue?: string;
+    withoutWeb?: number;
+    conversionRate?: string;
+    messagesSent?: string;
+}
+
 export default function App() {
     const [currentRoute, setCurrentRoute] = useState('dashboard');
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
 
     const fetchStats = () => {
-        getDashboardStats().then(setStats);
+        getDashboardStats().then(s => setStats(s as DashboardStats));
     };
 
     useEffect(() => {
@@ -771,13 +778,13 @@ export default function App() {
     );
 }
 
-const Dashboard = ({ stats, onRefresh }: { stats: any, onRefresh: () => void }) => {
+const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefresh: () => void }) => {
     const [isSyncing, setIsSyncing] = useState(false);
 
     const handleSync = async () => {
         setIsSyncing(true);
         try {
-            const result: any = await syncProspects();
+            const result = await syncProspects() as { success: boolean; leadsAdded?: number; error?: string };
             if (result.success) {
                 alert(`SINCRONIZACIÓN EXITOSA: Se han localizado ${result.leadsAdded} nuevos prospectos de alta fidelidad.`);
             } else {
