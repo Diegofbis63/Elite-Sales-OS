@@ -9,7 +9,7 @@ export async function runProspectingSync() {
 
     try {
         const { object } = await generateObject({
-            model: google('gemini-1.5-flash'), // Using a very stable model for search
+            model: google('gemini-2.5-flash'), // Using gemini-2.5-flash as 1.5 is no longer available
             schema: z.object({
                 leads: z.array(z.object({
                     name: z.string(),
