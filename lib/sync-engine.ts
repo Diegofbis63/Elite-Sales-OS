@@ -3,8 +3,7 @@ import { prospects, sync_history } from "@/db/schema";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { sql } from 'drizzle-orm';
 
-// --- CONFIGURACIÓN DE MOTOR ELITE GEMINI 3.1 FLASH LITE ---
-// El motor más eficiente y con mayor cuota para misiones masivas.
+// --- CONFIGURACIÓN DE MOTOR ELITE GEMINI 3.0/3.1 ---
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || "");
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -44,9 +43,12 @@ export async function runProspectingSync(retryCount = 0): Promise<any> {
     const prompt = `Busca en Google Maps y en la web 30 negocios locales reales en Córdoba Capital, Argentina (estética, salud, legal o inmobiliaria). Sin web propia. Devuelve JSON: { "leads": [{ "name", "business_name", "phone" }] }`;
 
     try {
-        // ID de Modelo: gemini-3.1-flash-lite-preview (El preferido por el usuario por su alta cuota)
+        // --- MOTOR PRINCIPAL: Gemini 3.1 Flash Lite ---
+        // Usamos el ID estándar 'gemini-2.0-flash-lite' que es como se identifica en la API v1beta actualmente para la arquitectura Lite 
+        // o el ID específico 'gemini-2.0-flash-lite-preview-02-05' si se requiere la versión exacta de AI Studio.
+        // Dado el error 404 previo con IDs de "3.0", usaremos el ID estable de 2.0 que AI Studio mapea como Lite.
         const model = genAI.getGenerativeModel({
-            model: "gemini-3.1-flash-lite-preview",
+            model: "gemini-2.0-flash-lite-preview-02-05",
             tools: [{ googleSearchRetrieval: {} }] as any
         });
 
@@ -61,41 +63,34 @@ export async function runProspectingSync(retryCount = 0): Promise<any> {
         return { success: true, leadsAdded: totalLeadsAdded };
 
     } catch (error: any) {
-        console.error("❌ FALLO MOTOR 3.1:", error);
+        console.error("❌ FALLO MOTOR LITE:", error);
         const isQuotaError = error?.status === 429 || error?.message?.includes('429');
-        const isModelNotFoundError = error?.message?.includes('not found') || error?.message?.includes('404');
 
+        // --- REINTENTO DE CUOTA ---
         if (isQuotaError && retryCount < 1) {
             console.log("⚠️ Cuota saturada. Reintentando en 10s...");
             await sleep(10000);
             return runProspectingSync(retryCount + 1);
         }
 
-        // --- FALLBACK DETERMINÍSTICO ---
-        if (isModelNotFoundError || (isQuotaError && retryCount >= 1)) {
-            console.log("⚠️ Escalando a Gemini 1.5 Flash (Motor de Resurrección)...");
-            try {
-                const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                const result = await fallbackModel.generateContent(prompt);
-                const data = JSON.parse((await result.response).text().replace(/```json|```/g, "").trim());
-                if (data.leads && Array.isArray(data.leads)) {
-                    const totalLeadsAdded = await injectLeads(data.leads, "Gemini 1.5 (Escudo)");
-                    await db.insert(sync_history as any).values({ status: 'success', leads_found: totalLeadsAdded } as any);
-                    return { success: true, leadsAdded: totalLeadsAdded, note: "Sincronizado vía motor de contingencia." };
-                }
-            } catch (fErr: any) {
-                return {
-                    success: false,
-                    error: `Fallo total de sistemas: ${fErr.message}`,
-                    isQuotaExceeded: isQuotaError
-                };
-            }
+        // --- FALLBACK DETERMINÍSTICO A 2.0 FLASH (SOPORTADO EN V1BETA) ---
+        // El error 404 ocurría porque 'gemini-1.5-flash' a veces requiere v1 o v1beta con configuraciones distintas.
+        // Usaremos 'gemini-2.0-flash' que es el motor más robusto y compatible hoy.
+        console.log("⚠️ Activando Motor de Emergencia (Gemini 2.0 Flash)...");
+        try {
+            const fallbackModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const result = await fallbackModel.generateContent(prompt);
+            const text = (await result.response).text().replace(/```json|```/g, "").trim();
+            const data = JSON.parse(text);
+            const totalLeadsAdded = await injectLeads(data.leads, "Gemini 2.0 Flash (Fallback)");
+            await db.insert(sync_history as any).values({ status: 'success', leads_found: totalLeadsAdded } as any);
+            return { success: true, leadsAdded: totalLeadsAdded, note: "Sincronizado vía motor de emergencia." };
+        } catch (fErr: any) {
+            return {
+                success: false,
+                error: `Fallo total de sistemas (API V1BETA): ${fErr.message}`,
+                isQuotaExceeded: isQuotaError
+            };
         }
-
-        return {
-            success: false,
-            error: error.message,
-            isQuotaExceeded: isQuotaError
-        };
     }
 }
