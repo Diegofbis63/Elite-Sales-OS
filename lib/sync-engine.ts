@@ -19,18 +19,20 @@ export async function runProspectingSync() {
         // Using the specific model requested by the user
         // Note: For grounding, current SDK might need a specific structure
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash-exp",
+            model: "gemini-1.5-flash",
         });
 
         const prompt = `
-            Actúa como un experto en prospección B2B. Tu misión es localizar exactamente 5 negocios reales en Córdoba, Argentina que pertenezcan a los rubros de Inmobiliarias, Estéticas o Clínicas. 
-            REQUISITOS CRÍTICOS:
-            1. NO deben tener sitio web oficial.
-            2. Deben tener un Rating mayor a 4.0 en Google Maps.
+            Actúa como un experto en prospección B2B de élite. 
+            Tu misión es localizar 5 negocios reales y operativos en Córdoba, Argentina (Inmobiliarias, Estéticas de Lujo o Clínicas Privadas).
+            
+            REQUISITOS OBLIGATORIOS:
+            1. NO deben tener sitio web oficial (o debe ser inaccesible).
+            2. Deben tener un Rating > 4.2 en Google Maps con reseñas reales.
             3. Devuelve los datos en un bloque JSON puro (un array de objetos) con los campos: 
-               name, business_name, phone, industry, rating (numérico), has_website (siempre false), maps_id (identificador único).
+               name, business_name, phone (formato +54...), industry, rating (numérico), has_website: false, maps_id (Place ID o Identificador Único).
 
-            Utiliza Google Search Grounding para validar que existen hoy. No inventes datos.
+            USA GOOGLE SEARCH GROUNDING PARA VALIDAR LA EXISTENCIA DE ESTOS NEGOCIOS HOY. No inventes datos.
         `;
 
         const result = await model.generateContent({
