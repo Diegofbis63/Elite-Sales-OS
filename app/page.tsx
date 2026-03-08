@@ -668,20 +668,16 @@ export default function App() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoggingIn(true);
+        const userInput = password.trim();
         const envPass = process.env.NEXT_PUBLIC_PASSCODE;
-        const correctPass = (envPass && typeof envPass === 'string' ? envPass.trim() : 'elite2024');
+        const targetPass = (envPass && typeof envPass === 'string' ? envPass.trim() : 'elite2024');
 
-        // Simular un poco de "procesamiento" para estética
-        setTimeout(() => {
-            if (password === correctPass) {
-                setIsAuthenticated(true);
-                localStorage.setItem('elite_session', 'true');
-            } else {
-                alert('AUTORIZACIÓN FALLIDA: Credenciales inválidas para el Nivel 4.');
-            }
-            setIsLoggingIn(false);
-        }, 800);
+        if (userInput === targetPass) {
+            localStorage.setItem('elite_session', 'true');
+            setIsAuthenticated(true);
+        } else {
+            alert('AUTORIZACIÓN DENEGADA: Credenciales inválidas.');
+        }
     };
 
     if (isAuthenticated === null) return null;
