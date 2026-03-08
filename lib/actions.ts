@@ -2,7 +2,7 @@
 
 import { db } from '../db';
 import { prospects, outbox, message_templates, sync_history } from '../db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { v2 as cloudinary } from 'cloudinary';
 import { runProspectingSync } from './sync-engine';
 
@@ -15,18 +15,16 @@ cloudinary.config({
 // --- Verification & Sync ---
 export async function verifyConnection() {
     try {
-        const testId = crypto.randomUUID();
-        // @ts-ignore
-        await db.insert(prospects).values({
-            id: testId,
-            name: "Test Connection",
+        const testName = `Test_${Date.now()}`;
+        await db.insert(prospects as any).values({
+            name: testName,
             business_name: "Antigravity Lab",
             status: 'cold',
             maps_id: `test_${Date.now()}`
-        });
+        } as any);
 
         const result = await db.query.prospects.findFirst({
-            where: eq(prospects.id, testId)
+            where: eq(prospects.name, testName)
         });
 
         if (result) {
@@ -51,21 +49,7 @@ export async function getProspects() {
         });
 
         if (results.length === 0) {
-            return [
-                {
-                    id: crypto.randomUUID(),
-                    name: "Dr. Alberto Fernández",
-                    business_name: "Clínica Estética Córdoba",
-                    phone: "+54 351 123 4567",
-                    industry: "Health",
-                    rating: "4.8",
-                    has_website: false,
-                    maps_id: "sample_id",
-                    status: 'cold' as const,
-                    last_interaction: null,
-                    createdAt: new Date()
-                }
-            ];
+            return [];
         }
         return results;
     } catch (error) {
@@ -74,10 +58,22 @@ export async function getProspects() {
     }
 }
 
+export async function createProspect(data: any) {
+    try {
+        await db.insert(prospects as any).values({
+            ...data,
+            maps_id: data.maps_id || `manual_${Date.now()}`
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error creating prospect:", error);
+        return { success: false, error: String(error) };
+    }
+}
+
 export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
     try {
-        // @ts-ignore
-        await db.update(prospects).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
+        await db.update(prospects as any).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
         return { success: true };
     } catch (error) {
         return { success: false };
@@ -87,8 +83,7 @@ export async function updateProspectStatus(id: string, status: 'cold' | 'contact
 // --- Outbox (WhatsApp Bridge) ---
 export async function queueMessage(phone: string, message: string, mediaUrl?: string) {
     try {
-        // @ts-ignore
-        await db.insert(outbox).values({
+        await db.insert(outbox as any).values({
             phone,
             message,
             media_url: mediaUrl,
@@ -105,16 +100,23 @@ export async function queueMessage(phone: string, message: string, mediaUrl?: st
 export async function getTemplates() {
     try {
         const t = await db.query.message_templates.findMany();
-        if (t.length === 0) {
-            return [{
-                id: crypto.randomUUID(),
-                title: "Liquid Luxury - Contacto",
-                content: "Hola {nombre}, vimos tu negocio {negocio} y tenemos una propuesta..."
-            }];
-        }
         return t;
     } catch (error) {
         return [];
+    }
+}
+
+export async function createTemplate(title: string, content: string) {
+    try {
+        await db.insert(message_templates as any).values({
+            title,
+            content,
+            media_urls: []
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error creating template:", error);
+        return { success: false, error: String(error) };
     }
 }
 
@@ -131,8 +133,9 @@ export async function uploadToCloudinary(formData: FormData) {
             const stream = cloudinary.uploader.upload_stream(
                 {
                     resource_type: 'auto',
-                    upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET
-                },
+                    upload_preset: 'elite_sales_preset', // Per directiva de ingeniería
+                    unsigned: true
+                } as any,
                 (error, result) => {
                     if (error) reject(error);
                     else resolve({ success: true, url: result?.secure_url });
@@ -174,5 +177,27 @@ export async function getDashboardStats() {
             withoutWeb: 0,
             totalProspects: 0
         };
+    }
+}
+
+export async function processOutbox() {
+    try {
+        const pending = await db.query.outbox.findMany({
+            where: eq(outbox.status, 'pending')
+        });
+
+        if (pending.length === 0) return { success: true, processed: 0 };
+
+        for (const msg of pending) {
+            // AQUÍ: Integración real con Twilio o WAAPI en el futuro
+            await db.update(outbox as any)
+                .set({ status: 'sent', sent_at: sql`now()` } as any)
+                .where(eq(outbox.id, msg.id));
+        }
+
+        return { success: true, processed: pending.length };
+    } catch (error) {
+        console.error("Outbox process error:", error);
+        return { success: false, error: String(error) };
     }
 }

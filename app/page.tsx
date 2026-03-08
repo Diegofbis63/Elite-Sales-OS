@@ -26,7 +26,18 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { getProspects, getTemplates, getDashboardStats, syncProspects, updateProspectStatus, queueMessage, uploadToCloudinary } from '@/lib/actions';
+import {
+    getProspects,
+    getTemplates,
+    getDashboardStats,
+    syncProspects,
+    updateProspectStatus,
+    queueMessage,
+    uploadToCloudinary,
+    createProspect,
+    createTemplate,
+    processOutbox
+} from '@/lib/actions';
 
 // --- Components ---
 
@@ -332,13 +343,436 @@ const Header = () => {
 
 // --- Page Components ---
 
-const Dashboard = () => {
-    const [stats, setStats] = useState<any>(null);
-    const [isSyncing, setIsSyncing] = useState(false);
+const ProspectsList = () => {
+    const [prospects, setProspects] = useState<any[]>([]);
+    const [isFetching, setIsFetching] = useState(true);
+    const [selectedProspect, setSelectedProspect] = useState<any>(null);
+    const [showWhatsApp, setShowWhatsApp] = useState(false);
+    const [filter, setFilter] = useState('');
+    const [showNewModal, setShowNewModal] = useState(false);
+
+    const fetchProspects = () => {
+        setIsFetching(true);
+        getProspects().then(data => {
+            setProspects(data);
+            setIsFetching(false);
+        });
+    };
 
     useEffect(() => {
-        getDashboardStats().then(setStats);
+        fetchProspects();
     }, []);
+
+    const filteredProspects = prospects.filter(p =>
+        p.name?.toLowerCase().includes(filter.toLowerCase()) ||
+        p.business_name?.toLowerCase().includes(filter.toLowerCase()) ||
+        p.industry?.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    const getStatusColor = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'interested': return 'text-amber-400 border-amber-400/20 bg-amber-400/5';
+            case 'contacted': return 'text-cyan-400 border-cyan-400/20 bg-cyan-400/5';
+            case 'closed': return 'text-purple-400 border-purple-400/20 bg-purple-400/5';
+            default: return 'text-white/20 border-white/5 bg-white/[0.02]';
+        }
+    };
+
+    const handleOpenWhatsApp = (p: any) => {
+        setSelectedProspect(p);
+        setShowWhatsApp(true);
+    };
+
+    return (
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-1000">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+                <div className="space-y-4">
+                    <h1 className="text-5xl font-serif font-light tracking-tight text-white/95">Strategic <span className="text-white/20 italic">Portfolio</span></h1>
+                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">Segmentación de Alta Fidelidad por IA.</p>
+                </div>
+                <div className="flex items-center gap-6">
+                    <div className="relative group">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-cyan-500/50 transition-colors" />
+                        <input
+                            placeholder="FILTRAR PORTFOLIO..."
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            className="pl-14 pr-10 py-3.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] focus:outline-none focus:border-white/20 transition-all w-64"
+                        />
+                    </div>
+                    <button
+                        onClick={() => setShowNewModal(true)}
+                        className="px-10 py-3.5 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-full transition-all hover:shadow-[0_10px_30px_rgba(255,255,255,0.2)] flex items-center gap-3"
+                    >
+                        <Plus className="w-4 h-4" /> Nuevo Lead
+                    </button>
+                </div>
+            </div>
+
+            <NewLeadModal isOpen={showNewModal} onClose={() => setShowNewModal(false)} onRefresh={fetchProspects} />
+
+            <SpotlightCard className="overflow-hidden border-0" neon={false}>
+                <div className="bg-[#0f0f0f]/30 backdrop-blur-3xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                            <thead>
+                                <tr className="border-b border-white/5 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] bg-white/[0.01]">
+                                    <th className="px-12 py-10 font-black">Entidades / Corporación</th>
+                                    <th className="px-12 py-10 font-black">Industria</th>
+                                    <th className="px-12 py-10 font-black">Canal Directo</th>
+                                    <th className="px-12 py-10 font-black">Status</th>
+                                    <th className="px-12 py-10 text-right font-black">Despacho</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <AnimatePresence mode="popLayout">
+                                    {isFetching ? (
+                                        Array.from({ length: 5 }).map((_, i) => (
+                                            <tr key={i} className="border-b border-white/5 animate-pulse">
+                                                <td colSpan={5} className="px-12 py-12 bg-white/[0.01]" />
+                                            </tr>
+                                        ))
+                                    ) : filteredProspects.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-12 py-32 text-center text-white/10 uppercase tracking-[0.5em] text-[10px] font-black">Sin coincidencias estratégicas.</td>
+                                        </tr>
+                                    ) : (
+                                        filteredProspects.map((p, i) => (
+                                            <motion.tr
+                                                key={p.id}
+                                                layout
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                className="border-b border-white/5 hover:bg-white/[0.03] transition-all group"
+                                            >
+                                                <td className="px-12 py-10">
+                                                    <div className="text-[14px] font-serif tracking-widest text-white/90 group-hover:text-white transition-colors uppercase leading-normal font-light">{p.business_name || p.name}</div>
+                                                    <div className="text-[8px] text-white/10 mt-3 uppercase tracking-[0.4em] font-black">UID: {String(p.id).slice(0, 8)}</div>
+                                                </td>
+                                                <td className="px-12 py-10">
+                                                    <span className="text-[10px] text-white/40 font-light tracking-[0.3em] uppercase">/ {p.industry || 'General'}</span>
+                                                </td>
+                                                <td className="px-12 py-10">
+                                                    <div className="text-[12px] font-mono text-white/80 font-bold tracking-widest">{p.phone || 'Privado'}</div>
+                                                    <div className={`mt-3 flex items-center gap-3 ${p.has_website ? 'text-green-500/30' : 'text-red-500/30'}`}>
+                                                        <div className={`w-1 h-1 rounded-full ${p.has_website ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
+                                                        <span className="text-[8px] font-black uppercase tracking-[0.3em]">{p.has_website ? 'Infraestructura Web' : 'Sintonía Pendiente'}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-12 py-10">
+                                                    <span className={`px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-[0.4em] border ${getStatusColor(p.status)} shadow-sm`}>
+                                                        {p.status || 'COLD'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-12 py-10">
+                                                    <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-700">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleOpenWhatsApp(p); }}
+                                                            className="p-4 rounded-full bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all hover:shadow-[0_0_25px_rgba(34,211,238,0.2)]"
+                                                        >
+                                                            <MessageSquare className="w-4 h-4" />
+                                                        </button>
+                                                        <button className="p-4 rounded-full bg-white/5 border border-white/10 text-white/20 hover:text-white hover:bg-white/10 transition-all">
+                                                            <Edit2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </motion.tr>
+                                        ))
+                                    )}
+                                </AnimatePresence>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </SpotlightCard>
+
+            <WhatsAppModal
+                isOpen={showWhatsApp}
+                onClose={() => setShowWhatsApp(false)}
+                prospect={selectedProspect}
+            />
+        </div>
+    );
+};
+
+const NewLeadModal = ({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose: () => void, onRefresh: () => void }) => {
+    const [formData, setFormData] = useState({ name: '', business_name: '', phone: '', industry: '' });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        const res = await createProspect({ ...formData, status: 'cold' });
+        if (res.success) {
+            onRefresh();
+            onClose();
+        } else {
+            alert("Error al guardar lead: " + res.error);
+        }
+        setIsSaving(false);
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
+                        <h3 className="text-xl font-serif mb-8 tracking-widest uppercase">Nuevo <span className="text-white/20 italic">Prospecto</span></h3>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <input placeholder="Nombre del Contacto" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                            <input placeholder="Nombre del Negocio" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={formData.business_name} onChange={e => setFormData({ ...formData, business_name: e.target.value })} />
+                            <input placeholder="WhatsApp (Formato Int.)" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                            <input placeholder="Industria" className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={formData.industry} onChange={e => setFormData({ ...formData, industry: e.target.value })} />
+                            <button disabled={isSaving} className="w-full py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl">
+                                {isSaving ? 'Guardando...' : 'Registrar Lead'}
+                            </button>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
+const NewTemplateModal = ({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose: () => void, onRefresh: () => void }) => {
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        const res = await createTemplate(title, content);
+        if (res.success) {
+            onRefresh();
+            onClose();
+        } else {
+            alert("Error al guardar estrategia: " + res.error);
+        }
+        setIsSaving(false);
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
+                        <h3 className="text-xl font-serif mb-8 tracking-widest uppercase">Nueva <span className="text-white/20 italic">Estrategia</span></h3>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <input placeholder="Título de la Campaña" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={title} onChange={e => setTitle(e.target.value)} />
+                            <textarea placeholder="Cuerpo del Mensaje ({nombre}, {negocio})" required className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={content} onChange={e => setContent(e.target.value)} />
+                            <button disabled={isSaving} className="w-full py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl">
+                                {isSaving ? 'Guardando...' : 'Guardar Estrategia'}
+                            </button>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
+const TemplatesList = () => {
+    const [templates, setTemplates] = useState<any[]>([]);
+    const [isFetching, setIsFetching] = useState(true);
+    const [showNewModal, setShowNewModal] = useState(false);
+
+    const fetchTemplates = () => {
+        setIsFetching(true);
+        getTemplates().then(data => {
+            setTemplates(data);
+            setIsFetching(false);
+        });
+    };
+
+    useEffect(() => {
+        fetchTemplates();
+    }, []);
+
+    return (
+        <div className="space-y-16 animate-in fade-in duration-1000">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+                <div className="space-y-4">
+                    <h1 className="text-5xl font-serif font-light tracking-tight text-white/95">Writing <span className="text-white/20 italic">Strategies</span></h1>
+                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">Activos de persuasión para cierre inmediato.</p>
+                </div>
+                <button
+                    onClick={() => setShowNewModal(true)}
+                    className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full transition-all hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] flex items-center gap-4"
+                >
+                    <Plus className="w-5 h-5" /> Nueva Apertura
+                </button>
+            </div>
+
+            <NewTemplateModal isOpen={showNewModal} onClose={() => setShowNewModal(false)} onRefresh={fetchTemplates} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {isFetching ? (
+                    <div className="col-span-full py-20 text-center text-white/10 uppercase tracking-widest text-[10px]">Cargando protocolos de copia...</div>
+                ) : templates.length === 0 ? (
+                    <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl text-white/20 uppercase tracking-widest text-[10px]">No hay estrategias registradas.</div>
+                ) : templates.map((tpl, i) => (
+                    <SpotlightCard key={tpl.id} delay={i * 0.1} className="p-12 group h-full flex flex-col justify-between cursor-default">
+                        <div className="space-y-12">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-serif font-light tracking-widest text-white hover:text-cyan-400 transition-colors duration-500 uppercase">{tpl.title}</h3>
+                                <div className="p-2.5 bg-white/[0.03] rounded-xl border border-white/10">
+                                    <MessageSquare className="w-4.5 h-4.5 text-white/20" />
+                                </div>
+                            </div>
+                            <p className="text-sm text-white/40 leading-[2.2] font-light italic tracking-wide">
+                                "{tpl.content}"
+                            </p>
+                        </div>
+                        <div className="mt-14 flex items-center justify-between pt-12 border-t border-white/5">
+                            <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em]">Estrategia Elite / v2.1</div>
+                            <div className="flex gap-5 opacity-0 group-hover:opacity-100 transition-all duration-700">
+                                <button className="p-3.5 bg-white/5 rounded-full hover:bg-white/10 transition-colors border border-white/5">
+                                    <Edit2 className="w-3.5 h-3.5 text-white/40" />
+                                </button>
+                                <button className="p-3.5 bg-white/5 rounded-full hover:bg-red-500/20 transition-colors border border-white/5">
+                                    <Trash2 className="w-3.5 h-3.5 text-red-400/40" />
+                                </button>
+                            </div>
+                        </div>
+                    </SpotlightCard>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// --- Layout & App ---
+
+const Layout = ({ children, currentRoute, setCurrentRoute }: { children: React.ReactNode, currentRoute: string, setCurrentRoute: (r: string) => void }) => {
+    return (
+        <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans selection:bg-cyan-500/30 selection:text-white">
+            <GlobalSpotlight />
+            <Sidebar currentRoute={currentRoute} setCurrentRoute={setCurrentRoute} />
+            <div className="flex-1 lg:ml-64 flex flex-col min-w-0 overflow-hidden relative">
+                {/* Background Ambient Depth */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-cyan-500/[0.03] blur-[180px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-[800px] h-[400px] bg-purple-500/[0.02] blur-[150px] rounded-full pointer-events-none" />
+
+                <Header />
+                <main className="flex-1 overflow-y-auto p-10 lg:p-16 relative z-10 custom-scrollbar scroll-smooth">
+                    {children}
+                </main>
+            </div>
+        </div>
+    );
+};
+
+export default function App() {
+    const [currentRoute, setCurrentRoute] = useState('dashboard');
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [password, setPassword] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [stats, setStats] = useState<any>(null);
+
+    const fetchStats = () => {
+        getDashboardStats().then(setStats);
+    };
+
+    useEffect(() => {
+        const session = localStorage.getItem('elite_session');
+        if (session === 'true') {
+            setIsAuthenticated(true);
+            fetchStats();
+        } else {
+            setIsAuthenticated(false);
+        }
+    }, []);
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        const userInput = password.trim();
+        const envPass = process.env.NEXT_PUBLIC_PASSCODE;
+        const targetPass = (envPass && typeof envPass === 'string' ? envPass.trim() : 'elite2024');
+
+        if (userInput === targetPass) {
+            localStorage.setItem('elite_session', 'true');
+            setIsAuthenticated(true);
+            fetchStats();
+        } else {
+            alert('AUTORIZACIÓN DENEGADA: Credenciales inválidas.');
+        }
+    };
+
+    if (isAuthenticated === null) return null;
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-8 selection:bg-cyan-500/40">
+                <GlobalSpotlight />
+                <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-full max-w-xl p-16 rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl relative overflow-hidden shadow-[0_60px_120px_rgba(0,0,0,1)] group"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/5 blur-[80px] rounded-full group-hover:bg-cyan-500/10 transition-all duration-1000" />
+
+                    <div className="relative z-10 space-y-16">
+                        <div className="space-y-8">
+                            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-black font-black text-xl mx-auto shadow-[0_0_40px_rgba(255,255,255,0.2)]">E</div>
+                            <div className="text-center space-y-4">
+                                <h1 className="text-4xl font-serif font-light tracking-[0.25em] uppercase text-white/95">Elite <span className="text-white/20 italic">Interface</span></h1>
+                                <p className="text-[10px] text-white/20 uppercase tracking-[0.6em] font-black">Secure Encryption Layer / Level 4 Prot.</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleLogin} className="space-y-10">
+                            <div className="space-y-5">
+                                <label className="text-[9px] font-black uppercase tracking-[0.5em] text-white/20 ml-4">Ingresar Passcode Maestro</label>
+                                <input
+                                    type="password"
+                                    autoFocus
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="w-full bg-white/[0.02] border border-white/10 rounded-3xl py-7 px-10 text-center text-3xl tracking-[1em] font-mono focus:outline-none focus:border-white/20 focus:bg-white/5 transition-all text-white/90"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isLoggingIn}
+                                className="w-full py-6 bg-white text-black text-[11px] font-black uppercase tracking-[0.5em] rounded-3xl hover:bg-neutral-100 transition-all shadow-[0_25px_50px_rgba(255,255,255,0.1)] flex items-center justify-center gap-4 disabled:opacity-50"
+                            >
+                                {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sincronizar Acceso'}
+                            </button>
+                        </form>
+
+                        <div className="text-center pt-10 border-t border-white/5">
+                            <p className="text-[8px] text-white/10 uppercase tracking-[0.3em] font-black leading-relaxed">
+                                Elite Sales OS ® Enterprise Edition<br />
+                                Accelerated by Antigravity Neuro-Link Technology
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
+
+    return (
+        <Layout currentRoute={currentRoute} setCurrentRoute={setCurrentRoute}>
+            {currentRoute === 'dashboard' && <Dashboard stats={stats} onRefresh={fetchStats} />}
+            {currentRoute === 'prospects' && <ProspectsList />}
+            {currentRoute === 'templates' && <TemplatesList />}
+            {currentRoute === 'analytics' && <AnalyticsView stats={stats} onRefresh={fetchStats} />}
+            {currentRoute === 'settings' && <SettingsView />}
+        </Layout>
+    );
+}
+
+const Dashboard = ({ stats, onRefresh }: { stats: any, onRefresh: () => void }) => {
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const handleSync = async () => {
         setIsSyncing(true);
@@ -349,8 +783,7 @@ const Dashboard = () => {
             } else {
                 alert(`ERROR DE PROTOCOLO: ${result.error || 'Fallo desconocido en el motor de IA'}`);
             }
-            const newStats = await getDashboardStats();
-            setStats(newStats);
+            onRefresh();
         } catch (err) {
             alert(`EXCEPCIÓN CRÍTICA: ${err}`);
         } finally {
@@ -463,320 +896,49 @@ const Dashboard = () => {
     );
 };
 
-const ProspectsList = () => {
-    const [prospects, setProspects] = useState<any[]>([]);
-    const [isFetching, setIsFetching] = useState(true);
-    const [selectedProspect, setSelectedProspect] = useState<any>(null);
-    const [showWhatsApp, setShowWhatsApp] = useState(false);
+const AnalyticsView = ({ stats, onRefresh }: { stats: any, onRefresh: () => void }) => {
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    useEffect(() => {
-        getProspects().then(data => {
-            setProspects(data);
-            setIsFetching(false);
-        });
-    }, []);
-
-    const getStatusColor = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case 'interested': return 'text-amber-400 border-amber-400/20 bg-amber-400/5';
-            case 'contacted': return 'text-cyan-400 border-cyan-400/20 bg-cyan-400/5';
-            case 'closed': return 'text-purple-400 border-purple-400/20 bg-purple-400/5';
-            default: return 'text-white/20 border-white/5 bg-white/[0.02]';
+    const handleProcessOutbox = async () => {
+        setIsProcessing(true);
+        const res = await processOutbox();
+        if (res.success) {
+            alert(`PROTOCOLO COMPLETADO: Se han emitido ${res.processed} comunicaciones estratégicas.`);
+            onRefresh();
+        } else {
+            alert("FRECUENCIA INTERRUMPIDA: Fallo en el bridge de WhatsApp.");
         }
-    };
-
-    const handleOpenWhatsApp = (p: any) => {
-        setSelectedProspect(p);
-        setShowWhatsApp(true);
+        setIsProcessing(false);
     };
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-1000">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-                <div className="space-y-4">
-                    <h1 className="text-5xl font-serif font-light tracking-tight text-white/95">Strategic <span className="text-white/20 italic">Portfolio</span></h1>
-                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">Segmentación de Alta Fidelidad por IA.</p>
-                </div>
-                <div className="flex items-center gap-6">
-                    <button className="px-8 py-3.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] hover:bg-white/10 transition-all flex items-center gap-3">
-                        <Filter className="w-4 h-4 text-white/20" /> Filtrar Vista
-                    </button>
-                    <button className="px-10 py-3.5 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-full transition-all hover:shadow-[0_10px_30px_rgba(255,255,255,0.2)] flex items-center gap-3">
-                        <Plus className="w-4 h-4" /> Nuevo Lead
-                    </button>
-                </div>
-            </div>
-
-            <SpotlightCard className="overflow-hidden border-0" neon={false}>
-                <div className="bg-[#0f0f0f]/30 backdrop-blur-3xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
-                    <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
-                            <thead>
-                                <tr className="border-b border-white/5 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] bg-white/[0.01]">
-                                    <th className="px-12 py-10 font-black">Entidades / Corporación</th>
-                                    <th className="px-12 py-10 font-black">Industria</th>
-                                    <th className="px-12 py-10 font-black">Canal Directo</th>
-                                    <th className="px-12 py-10 font-black">Status</th>
-                                    <th className="px-12 py-10 text-right font-black">Despacho</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <AnimatePresence mode="popLayout">
-                                    {isFetching ? (
-                                        Array.from({ length: 5 }).map((_, i) => (
-                                            <tr key={i} className="border-b border-white/5 animate-pulse">
-                                                <td colSpan={5} className="px-12 py-12 bg-white/[0.01]" />
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        prospects.map((p, i) => (
-                                            <motion.tr
-                                                key={p.id}
-                                                layout
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: i * 0.05 }}
-                                                className="border-b border-white/5 hover:bg-white/[0.03] transition-all group"
-                                            >
-                                                <td className="px-12 py-10">
-                                                    <div className="text-[14px] font-serif tracking-widest text-white/90 group-hover:text-white transition-colors uppercase leading-normal font-light">{p.business_name || p.name}</div>
-                                                    <div className="text-[8px] text-white/10 mt-3 uppercase tracking-[0.4em] font-black">UID: {String(p.id).slice(0, 8)}</div>
-                                                </td>
-                                                <td className="px-12 py-10">
-                                                    <span className="text-[10px] text-white/40 font-light tracking-[0.3em] uppercase">/ {p.industry || 'General'}</span>
-                                                </td>
-                                                <td className="px-12 py-10">
-                                                    <div className="text-[12px] font-mono text-white/80 font-bold tracking-widest">{p.phone || 'Privado'}</div>
-                                                    <div className={`mt-3 flex items-center gap-3 ${p.has_website ? 'text-green-500/30' : 'text-red-500/30'}`}>
-                                                        <div className={`w-1 h-1 rounded-full ${p.has_website ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                                                        <span className="text-[8px] font-black uppercase tracking-[0.3em]">{p.has_website ? 'Infraestructura Web' : 'Sintonía Pendiente'}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-12 py-10">
-                                                    <span className={`px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-[0.4em] border ${getStatusColor(p.status)} shadow-sm`}>
-                                                        {p.status || 'COLD'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-12 py-10">
-                                                    <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-700">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleOpenWhatsApp(p); }}
-                                                            className="p-4 rounded-full bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all hover:shadow-[0_0_25px_rgba(34,211,238,0.2)]"
-                                                        >
-                                                            <MessageSquare className="w-4 h-4" />
-                                                        </button>
-                                                        <button className="p-4 rounded-full bg-white/5 border border-white/10 text-white/20 hover:text-white hover:bg-white/10 transition-all">
-                                                            <Edit2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </motion.tr>
-                                        ))
-                                    )}
-                                </AnimatePresence>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </SpotlightCard>
-
-            <WhatsAppModal
-                isOpen={showWhatsApp}
-                onClose={() => setShowWhatsApp(false)}
-                prospect={selectedProspect}
-            />
-        </div>
-    );
-};
-
-const TemplatesList = () => {
-    const [templates, setTemplates] = useState<any[]>([]);
-
-    useEffect(() => {
-        getTemplates().then(setTemplates);
-    }, []);
-
-    return (
-        <div className="space-y-16 animate-in fade-in duration-1000">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-                <div className="space-y-4">
-                    <h1 className="text-5xl font-serif font-light tracking-tight text-white/95">Writing <span className="text-white/20 italic">Strategies</span></h1>
-                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">Activos de persuasión para cierre inmediato.</p>
-                </div>
-                <button className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full transition-all hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] flex items-center gap-4">
-                    <Plus className="w-5 h-5" /> Nueva Apertura
+        <div className="space-y-12 animate-in fade-in duration-700">
+            <div className="flex items-center justify-between">
+                <h2 className="text-4xl font-serif font-light tracking-tight text-white/90">Performance <span className="text-white/20 italic">Metrics</span></h2>
+                <button
+                    onClick={handleProcessOutbox}
+                    disabled={isProcessing}
+                    className="px-8 py-3 bg-cyan-500 text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-full hover:shadow-[0_10px_30px_rgba(34,211,238,0.3)] transition-all flex items-center gap-3 disabled:opacity-50"
+                >
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {isProcessing ? 'Procesando...' : 'Procesar Outbox'}
                 </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {templates.map((tpl, i) => (
-                    <SpotlightCard key={tpl.id} delay={i * 0.1} className="p-12 group h-full flex flex-col justify-between cursor-default">
-                        <div className="space-y-12">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-xl font-serif font-light tracking-widest text-white hover:text-cyan-400 transition-colors duration-500 uppercase">{tpl.title}</h3>
-                                <div className="p-2.5 bg-white/[0.03] rounded-xl border border-white/10">
-                                    <MessageSquare className="w-4.5 h-4.5 text-white/20" />
-                                </div>
-                            </div>
-                            <p className="text-sm text-white/40 leading-[2.2] font-light italic tracking-wide">
-                                "{tpl.content}"
-                            </p>
-                        </div>
-                        <div className="mt-14 flex items-center justify-between pt-12 border-t border-white/5">
-                            <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em]">Estrategia Elite / v2.1</div>
-                            <div className="flex gap-5 opacity-0 group-hover:opacity-100 transition-all duration-700">
-                                <button className="p-3.5 bg-white/5 rounded-full hover:bg-white/10 transition-colors border border-white/5">
-                                    <Edit2 className="w-3.5 h-3.5 text-white/40" />
-                                </button>
-                                <button className="p-3.5 bg-white/5 rounded-full hover:bg-red-500/20 transition-colors border border-white/5">
-                                    <Trash2 className="w-3.5 h-3.5 text-red-400/40" />
-                                </button>
-                            </div>
-                        </div>
-                    </SpotlightCard>
-                ))}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <SpotlightCard className="p-10 h-80 flex flex-col justify-center items-center">
+                    <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] mb-10">Eficiencia de Conversión</p>
+                    <div className="text-6xl font-serif text-cyan-400">{stats?.conversionRate || '0%'}</div>
+                    <p className="text-[9px] text-white/20 uppercase tracking-widest mt-6">Basado en {stats?.totalProspects || 0} entidades</p>
+                </SpotlightCard>
+                <SpotlightCard className="p-10 h-80 flex flex-col justify-center items-center">
+                    <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] mb-10">Alcance de Red</p>
+                    <div className="text-6xl font-serif text-white">{stats?.messagesSent || 0}</div>
+                    <p className="text-[9px] text-white/20 uppercase tracking-widest mt-6">Envíos validados por Outbox</p>
+                </SpotlightCard>
             </div>
         </div>
     );
 };
-
-// --- Layout & App ---
-
-const Layout = ({ children, currentRoute, setCurrentRoute }: { children: React.ReactNode, currentRoute: string, setCurrentRoute: (r: string) => void }) => {
-    return (
-        <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans selection:bg-cyan-500/30 selection:text-white">
-            <GlobalSpotlight />
-            <Sidebar currentRoute={currentRoute} setCurrentRoute={setCurrentRoute} />
-            <div className="flex-1 lg:ml-64 flex flex-col min-w-0 overflow-hidden relative">
-                {/* Background Ambient Depth */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-cyan-500/[0.03] blur-[180px] rounded-full pointer-events-none" />
-                <div className="absolute bottom-0 right-0 w-[800px] h-[400px] bg-purple-500/[0.02] blur-[150px] rounded-full pointer-events-none" />
-
-                <Header />
-                <main className="flex-1 overflow-y-auto p-10 lg:p-16 relative z-10 custom-scrollbar scroll-smooth">
-                    {children}
-                </main>
-            </div>
-        </div>
-    );
-};
-
-export default function App() {
-    const [currentRoute, setCurrentRoute] = useState('dashboard');
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-    const [password, setPassword] = useState('');
-    const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-    useEffect(() => {
-        const session = localStorage.getItem('elite_session');
-        if (session === 'true') {
-            setIsAuthenticated(true);
-        } else {
-            setIsAuthenticated(false);
-        }
-    }, []);
-
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        const userInput = password.trim();
-        const envPass = process.env.NEXT_PUBLIC_PASSCODE;
-        const targetPass = (envPass && typeof envPass === 'string' ? envPass.trim() : 'elite2024');
-
-        if (userInput === targetPass) {
-            localStorage.setItem('elite_session', 'true');
-            setIsAuthenticated(true);
-        } else {
-            alert('AUTORIZACIÓN DENEGADA: Credenciales inválidas.');
-        }
-    };
-
-    if (isAuthenticated === null) return null;
-
-    if (!isAuthenticated) {
-        return (
-            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-8 selection:bg-cyan-500/40">
-                <GlobalSpotlight />
-                <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-full max-w-xl p-16 rounded-[2.5rem] bg-white/[0.03] border border-white/10 backdrop-blur-3xl relative overflow-hidden shadow-[0_60px_120px_rgba(0,0,0,1)] group"
-                >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/5 blur-[80px] rounded-full group-hover:bg-cyan-500/10 transition-all duration-1000" />
-
-                    <div className="relative z-10 space-y-16">
-                        <div className="space-y-8">
-                            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-black font-black text-xl mx-auto shadow-[0_0_40px_rgba(255,255,255,0.2)]">E</div>
-                            <div className="text-center space-y-4">
-                                <h1 className="text-4xl font-serif font-light tracking-[0.25em] uppercase text-white/95">Elite <span className="text-white/20 italic">Interface</span></h1>
-                                <p className="text-[10px] text-white/20 uppercase tracking-[0.6em] font-black">Secure Encryption Layer / Level 4 Prot.</p>
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleLogin} className="space-y-10">
-                            <div className="space-y-5">
-                                <label className="text-[9px] font-black uppercase tracking-[0.5em] text-white/20 ml-4">Ingresar Passcode Maestro</label>
-                                <input
-                                    type="password"
-                                    autoFocus
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full bg-white/[0.02] border border-white/10 rounded-3xl py-7 px-10 text-center text-3xl tracking-[1em] font-mono focus:outline-none focus:border-white/20 focus:bg-white/5 transition-all text-white/90"
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={isLoggingIn}
-                                className="w-full py-6 bg-white text-black text-[11px] font-black uppercase tracking-[0.5em] rounded-3xl hover:bg-neutral-100 transition-all shadow-[0_25px_50px_rgba(255,255,255,0.1)] flex items-center justify-center gap-4 disabled:opacity-50"
-                            >
-                                {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sincronizar Acceso'}
-                            </button>
-                        </form>
-
-                        <div className="text-center pt-10 border-t border-white/5">
-                            <p className="text-[8px] text-white/10 uppercase tracking-[0.3em] font-black leading-relaxed">
-                                Elite Sales OS ® Enterprise Edition<br />
-                                Accelerated by Antigravity Neuro-Link Technology
-                            </p>
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
-        );
-    }
-
-    return (
-        <Layout currentRoute={currentRoute} setCurrentRoute={setCurrentRoute}>
-            {currentRoute === 'dashboard' && <Dashboard />}
-            {currentRoute === 'prospects' && <ProspectsList />}
-            {currentRoute === 'templates' && <TemplatesList />}
-            {currentRoute === 'analytics' && <AnalyticsView stats={stats} />}
-            {currentRoute === 'settings' && <SettingsView />}
-        </Layout>
-    );
-}
-
-// --- Specific Views ---
-
-const AnalyticsView = ({ stats }: { stats: any }) => (
-    <div className="space-y-12 animate-in fade-in duration-700">
-        <h2 className="text-4xl font-serif font-light tracking-tight text-white/90">Performance <span className="text-white/20 italic">Metrics</span></h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <SpotlightCard className="p-10 h-80 flex flex-col justify-center items-center">
-                <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] mb-10">Eficiencia de Conversión</p>
-                <div className="text-6xl font-serif text-cyan-400">{stats?.conversionRate || '0%'}</div>
-                <p className="text-[9px] text-white/20 uppercase tracking-widest mt-6">Basado en {stats?.totalProspects || 0} entidades</p>
-            </SpotlightCard>
-            <SpotlightCard className="p-10 h-80 flex flex-col justify-center items-center">
-                <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] mb-10">Alcance de Red</p>
-                <div className="text-6xl font-serif text-white">{stats?.messagesSent || 0}</div>
-                <p className="text-[9px] text-white/20 uppercase tracking-widest mt-6">Envíos validados por Outbox</p>
-            </SpotlightCard>
-        </div>
-    </div>
-);
 
 const SettingsView = () => (
     <div className="space-y-12 animate-in fade-in duration-700">
@@ -784,7 +946,7 @@ const SettingsView = () => (
         <div className="max-w-2xl space-y-6">
             <SpotlightCard className="p-10 space-y-8">
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">API Core (Gemini 2.5)</span>
+                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">API Core (Gemini 3 Flash - Next Gen)</span>
                     <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_green]" />
                 </div>
                 <div className="flex items-center justify-between">
@@ -805,3 +967,4 @@ const SettingsView = () => (
         </div>
     </div>
 );
+
