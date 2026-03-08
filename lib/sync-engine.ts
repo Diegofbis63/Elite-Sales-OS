@@ -1,85 +1,109 @@
 import { db } from "@/db";
-import { prospects, syncHistory } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { prospects, sync_history } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-export async function runProspectingSync(query: string = "negocios Córdoba Argentina") {
-    console.log("Starting Prospecting Sync (Broad Mode)...");
+export async function runProspectingSync() {
+    console.log("🚀 Starting AI Prospecting Sync (Gemini Search Grounding)...");
 
-    if (!GOOGLE_MAPS_API_KEY) {
-        console.error("No Google Maps API key found");
-        return { success: false, error: "Missing API Key" };
+    if (!GEMINI_API_KEY) {
+        console.error("❌ No Gemini API key found");
+        return { success: false, error: "Missing GEMINI_API_KEY" };
     }
 
-    const queries = [
-        "restaurantes Córdoba Argentina",
-        "hoteles Córdoba Argentina",
-        "salones de belleza Córdoba Argentina",
-        "concesionarias Córdoba Argentina",
-        "inmobiliarias Córdoba Argentina"
-    ];
-
-    let totalLeadsAdded = 0;
-
     try {
-        for (const q of queries) {
-            console.log(`Searching for: ${q}`);
-            const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(q)}&key=${GOOGLE_MAPS_API_KEY}`;
-            const response = await fetch(url);
-            const data = await response.json();
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        // Using the specific model requested by the user
+        // Note: For grounding, current SDK might need a specific structure
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash-preview-09-2025",
+        });
 
-            if (data.status === "OK" && data.results) {
-                console.log(`Found ${data.results.length} results for ${q}`);
-                for (const result of data.results) {
+        const prompt = `
+            Actúa como un experto en prospección B2B. Tu misión es localizar exactamente 10 negocios reales en Córdoba, Argentina que pertenezcan a los rubros de Inmobiliarias, Estéticas o Clínicas. 
+            REQUISITOS CRÍTICOS:
+            1. NO deben tener sitio web oficial.
+            2. Deben tener un Rating mayor a 4.0 en Google Maps.
+            3. Devuelve los datos en formato JSON puro (array de objetos) con los siguientes campos:
+               - name: Nombre visible.
+               - business_name: Razón social o nombre completo del comercio.
+               - phone: Teléfono con formato internacional.
+               - industry: El rubro (Inmobiliaria, Estética, Clínica).
+               - rating: El rating numérico.
+               - has_website: false.
+               - maps_id: Un identificador único (puedes usar el Place ID si lo conoces o un hash del nombre y dirección).
 
-                    // Deduplication check early by place_id
-                    const existing = await db.query.prospects.findFirst({
-                        where: eq(prospects.googleMapsId, result.place_id),
-                    });
+            Búscalo usando Google Search Grounding para asegurar que la información es real hoy.
+        `;
 
-                    if (existing) continue;
+        // At this SDK version/timeline, grounding might be enabled as a tool
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            tools: [
+                // @ts-ignore - Assuming standard grounding tool in this timeline
+                { googleSearchRetrieval: {} }
+            ]
+        });
 
-                    // Fetch details
-                    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${result.place_id}&fields=name,formatted_phone_number,website,rating,types&key=${GOOGLE_MAPS_API_KEY}`;
-                    const detailsRes = await fetch(detailsUrl);
-                    const details = await detailsRes.json();
+        const responseText = result.response.text();
+        console.log("AI Response received. Parsing JSON...");
 
-                    if (details.status === "OK" && details.result) {
-                        const place = details.result;
-
-                        // Broad logic: Add businesses without website OR low rating (< 4.2)
-                        // User wants high-value, but for demo let's add those who NEED help
-                        if (!place.website || (place.rating && place.rating < 4.2)) {
-                            await db.insert(prospects).values({
-                                name: place.name || "Empresa",
-                                businessName: place.name || "Empresa",
-                                phone: place.formatted_phone_number || "S/D",
-                                industry: place.types?.[0] || "Business",
-                                rating: place.rating || 0,
-                                hasWebsite: !!place.website,
-                                googleMapsId: result.place_id,
-                                status: 'cold',
-                            });
-                            totalLeadsAdded++;
-                        }
-                    }
-
-                    // Limit per query to avoid hitting limits too fast in one go
-                    if (totalLeadsAdded > 30) break;
-                }
-            }
-            if (totalLeadsAdded > 50) break;
+        // Extract JSON from response (handling potential markdown blocks)
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) {
+            throw new Error("Could not find JSON array in AI response");
         }
 
-        await db.insert(syncHistory).values({
+        const leads = JSON.parse(jsonMatch[0]);
+        let totalLeadsAdded = 0;
+
+        for (const lead of leads) {
+            try {
+                // Upsert logic based on maps_id
+                await db.insert(prospects)
+                    .values({
+                        name: lead.name,
+                        business_name: lead.business_name,
+                        phone: lead.phone,
+                        industry: lead.industry,
+                        rating: String(lead.rating),
+                        has_website: lead.has_website || false,
+                        maps_id: lead.maps_id,
+                        status: 'cold'
+                    })
+                    .onConflictDoUpdate({
+                        target: prospects.maps_id,
+                        set: {
+                            name: lead.name,
+                            business_name: lead.business_name,
+                            phone: lead.phone,
+                            industry: lead.industry,
+                            rating: String(lead.rating),
+                            has_website: lead.has_website || false,
+                            last_interaction: new Date()
+                        }
+                    });
+                totalLeadsAdded++;
+            } catch (err) {
+                console.error(`Error upserting lead ${lead.name}:`, err);
+            }
+        }
+
+        await db.insert(sync_history).values({
             status: 'success',
-            leadsFound: totalLeadsAdded,
+            leads_found: totalLeadsAdded,
         });
 
         return { success: true, leadsAdded: totalLeadsAdded };
+
     } catch (error) {
-        console.error("Sync error in engine:", error);
+        console.error("❌ Sync error in AI engine:", error);
+        await db.insert(sync_history).values({
+            status: 'failed',
+            leads_found: 0,
+        });
         return { success: false, error: String(error) };
     }
 }

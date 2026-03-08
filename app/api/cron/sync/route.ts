@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 import { runProspectingSync } from '@/lib/sync-engine';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(request: Request) {
-    // Check for Vercel Cron Secret (optional but recommended)
+    // Basic verification for Vercel Cron
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return new Response('Unauthorized', { status: 401 });
     }
 
+    console.log("Cron sync triggered.");
+    const result = await runProspectingSync();
+    return NextResponse.json(result);
+}
+
+export async function POST(request: Request) {
+    // For manual triggers (if requested)
     const result = await runProspectingSync();
     return NextResponse.json(result);
 }
