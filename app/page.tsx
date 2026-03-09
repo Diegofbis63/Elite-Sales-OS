@@ -10,22 +10,16 @@ import {
     Settings,
     Search,
     Bell,
-    MessageCircle,
     Edit2,
     Trash2,
-    Filter,
     Plus,
-    Save,
-    MapPin,
     Loader2,
     X,
-    TrendingUp,
     Sparkles,
     Send,
     Upload,
     CheckCircle2
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 import {
     getProspects,
     getTemplates,
@@ -37,8 +31,7 @@ import {
     createProspect,
     createTemplate,
     processOutbox,
-    importLeads,
-    chatWithAI
+    importLeads
 } from '@/lib/actions';
 
 // --- Components ---
@@ -325,7 +318,7 @@ const Header = () => {
             <div className="flex items-center gap-10">
                 <div className="flex items-center gap-3 pr-10 border-r border-white/5">
                     <div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)] animate-pulse" />
-                    <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/30 font-bold">IA Sincro</span>
+                    <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/30 font-bold">Sync Hub</span>
                 </div>
                 <div className="flex items-center gap-4 group cursor-pointer">
                     <div className="text-right hidden sm:block">
@@ -804,7 +797,7 @@ export default function App() {
                         <div className="text-center pt-10 border-t border-white/5">
                             <p className="text-[8px] text-white/10 uppercase tracking-[0.3em] font-black leading-relaxed">
                                 Elite Sales OS ® Enterprise Edition<br />
-                                Accelerated by Antigravity Neuro-Link Technology
+                                Accelerated by Antigravity Protocol Hub
                             </p>
                         </div>
                     </div>
@@ -827,48 +820,31 @@ export default function App() {
 const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefresh: () => void }) => {
     const [isSyncing, setIsSyncing] = useState(false);
 
+    const [syncLog, setSyncLog] = useState<{ msg: string, type: 'info' | 'success' | 'error' | 'meta' }[]>([]);
+    const [isImporting, setIsImporting] = useState(false);
+
     const handleSync = async () => {
         setIsSyncing(true);
+        setSyncLog([{ msg: "INICIANDO PROTOCOLO DETERMINISTA v4...", type: 'meta' }]);
+
         try {
+            setSyncLog(prev => [...prev, { msg: "CONSULTANDO OUTSCRAPER API...", type: 'info' }]);
             const result = await syncProspects() as { success: boolean; leadsAdded?: number; error?: string };
+
             if (result.success) {
-                alert(`SINCRONIZACIÓN EXITOSA: Se han localizado ${result.leadsAdded} nuevos prospectos de alta fidelidad.`);
+                setSyncLog(prev => [
+                    ...prev,
+                    { msg: `EXTRACCIÓN COMPLETADA EXITOSAMENTE.`, type: 'success' },
+                    { msg: `RESULTADO: ${result.leadsAdded} NUEVOS LEADS INTEGRADOS EN NEONDB.`, type: 'success' }
+                ]);
             } else {
-                alert(`ERROR DE PROTOCOLO: ${result.error || 'Fallo desconocido en el motor de IA'}`);
+                setSyncLog(prev => [...prev, { msg: `FALLO DE PROTOCOLO: ${result.error}`, type: 'error' }]);
             }
             onRefresh();
         } catch (err) {
-            alert(`EXCEPCIÓN CRÍTICA: ${err}`);
+            setSyncLog(prev => [...prev, { msg: `EXCEPCIÓN CRÍTICA: ${err}`, type: 'error' }]);
         } finally {
             setIsSyncing(false);
-        }
-    };
-
-    const [chatInput, setChatInput] = useState('');
-    const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'model', parts: { text: string }[] }[]>([]);
-    const [isAILoading, setIsAILoading] = useState(false);
-    const [isImporting, setIsImporting] = useState(false);
-
-    const handleAIChat = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!chatInput.trim() || isAILoading) return;
-
-        const userMsg = chatInput;
-        setChatInput('');
-        setChatHistory(prev => [...prev, { role: 'user', parts: [{ text: userMsg }] }]);
-        setIsAILoading(true);
-
-        try {
-            const res = await chatWithAI(userMsg, chatHistory);
-            if (res.success) {
-                setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: res.text || '' }] }]);
-            } else {
-                alert("Error de Conexión Neural: " + res.error);
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsAILoading(false);
         }
     };
 
@@ -946,53 +922,64 @@ const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefre
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2">
-                    <SpotlightCard className="p-10 min-h-[500px] flex flex-col group">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">AI Intelligence Chat</h3>
-                            <div className="px-5 py-2.5 border border-white/10 rounded-full text-[9px] font-mono text-cyan-400 tracking-widest uppercase bg-cyan-400/5">
-                                Live Neural Link
+                    <SpotlightCard className="p-10 min-h-[500px] flex flex-col group bg-black/40 border-cyan-500/5">
+                        <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.6)] animate-pulse" />
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/90">Deterministic Extraction Terminal</h3>
+                            </div>
+                            <div className="px-5 py-2 hover:bg-white/5 rounded-full text-[9px] font-mono text-white/20 tracking-widest uppercase cursor-default transition-colors">
+                                Outscraper Engine Active
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto space-y-6 mb-8 custom-scrollbar pr-2 max-h-[350px]">
-                            {chatHistory.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30 px-10">
-                                    <MessageCircle className="w-12 h-12" />
-                                    <p className="text-[10px] uppercase font-black tracking-widest leading-loose">
-                                        Escribe para buscar prospectos.<br />
-                                        "Busca 15 estéticas en Córdoba y dame un JSON"
-                                    </p>
+                        <div className="flex-1 bg-black/20 rounded-2xl p-8 font-mono text-[11px] leading-relaxed overflow-y-auto custom-scrollbar border border-white/5 shadow-inner">
+                            {syncLog.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center opacity-20 py-20">
+                                    <Sparkles className="w-12 h-12 mb-6" />
+                                    <p className="tracking-[0.3em] font-black uppercase text-[10px]">Esperando Inicialización de Sincro...</p>
                                 </div>
                             ) : (
-                                chatHistory.map((chat, i) => (
-                                    <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[85%] p-5 rounded-2xl text-[11px] leading-relaxed tracking-wide ${chat.role === 'user' ? 'bg-white/5 border border-white/10 text-white/90' : 'bg-cyan-500/5 border border-cyan-500/10 text-cyan-50/80 shadow-[0_0_20px_rgba(34,211,238,0.05)]'}`}>
-                                            <ReactMarkdown className="prose prose-invert prose-xs">{chat.parts[0].text}</ReactMarkdown>
+                                <div className="space-y-4">
+                                    {syncLog.map((log, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="flex gap-4"
+                                        >
+                                            <span className="text-white/10 shrink-0 select-none">[{i + 1}]</span>
+                                            <span className={
+                                                log.type === 'success' ? 'text-cyan-400' :
+                                                    log.type === 'error' ? 'text-red-400' :
+                                                        log.type === 'meta' ? 'text-purple-400 font-bold' :
+                                                            'text-white/50'
+                                            }>
+                                                {log.msg}
+                                            </span>
+                                        </motion.div>
+                                    ))}
+                                    {isSyncing && (
+                                        <div className="flex items-center gap-4 text-cyan-500/60 animate-pulse">
+                                            <span className="text-white/10 shrink-0">[*]</span>
+                                            <span>TRABAJANDO EN LA RED...</span>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
                                         </div>
-                                    </div>
-                                ))
-                            )}
-                            {isAILoading && (
-                                <div className="flex justify-start">
-                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
-                                        <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Procesando Red...</span>
-                                    </div>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        <form onSubmit={handleAIChat} className="relative">
-                            <input
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                placeholder="Consultar inteligencia de mercado..."
-                                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-8 pr-20 text-[11px] font-light tracking-widest text-white/80 placeholder-white/20 focus:outline-none focus:border-cyan-500/30 transition-all border-dashed"
-                            />
-                            <button type="submit" disabled={isAILoading} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-cyan-400 hover:text-white transition-colors">
-                                <Send className="w-5 h-5" />
-                            </button>
-                        </form>
+                        <div className="mt-8 grid grid-cols-2 gap-6">
+                            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+                                <p className="text-[8px] text-white/20 uppercase tracking-widest font-black mb-2">Objetivo Geográfico</p>
+                                <p className="text-[11px] text-white/60 font-serif italic tracking-wider">Córdoba Capital, Argentina</p>
+                            </div>
+                            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+                                <p className="text-[8px] text-white/20 uppercase tracking-widest font-black mb-2">Capacidad Mensual</p>
+                                <p className="text-[11px] text-white/60 font-serif italic tracking-wider">∞ Resultados (Deterministic)</p>
+                            </div>
+                        </div>
                     </SpotlightCard>
                 </div>
 
@@ -1084,7 +1071,7 @@ const SettingsView = () => (
         <div className="max-w-2xl space-y-6">
             <SpotlightCard className="p-10 space-y-8">
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">API Core (Gemini 3.1 Flash Lite - High Capacity)</span>
+                    <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">Data Bridge (Outscraper - Deterministic Extraction)</span>
                     <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_green]" />
                 </div>
                 <div className="flex items-center justify-between">

@@ -11,12 +11,8 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.43",
-    "@google/genai": "^0.7.0",
-    "@google/generative-ai": "^0.24.1",
     "@neondatabase/serverless": "^1.0.2",
     "@vercel/node": "^3.0.0",
-    "ai": "^6.0.116",
     "autoprefixer": "^10.4.20",
     "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
@@ -28,7 +24,6 @@
     "postgres": "^3.4.4",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-markdown": "^9.0.1",
     "tailwind-merge": "^2.5.2",
     "tailwindcss": "^3.4.10",
     "zod": "^4.3.6"
