@@ -54,7 +54,15 @@ export async function injectLeads(leads: Lead[], source: string): Promise<number
 }
 
 export async function runProspectingSync(nicheQuery: string = "clinica OR estetica"): Promise<SyncResult> {
-    console.log(`📡 MOTOR DETERMINISTA v5 (Outscraper): Iniciando extracción de nicho: [${nicheQuery}]...`);
+    const locationAnchor = "cerca de Santa Rosa 1016 Cordoba Argentina";
+    const finalQuery = encodeURIComponent(`${nicheQuery} ${locationAnchor}`);
+    const limit = 30;
+    // CRÍTICO: Agregar &async=false para recibir datos inmediatos
+    const url = `https://api.app.outscraper.com/maps/search-v2?query=${finalQuery}&limit=${limit}&language=es&async=false`;
+
+    console.log(`📡 MOTOR DETERMINISTA v6 (Outscraper): Iniciando extracción de nicho: [${nicheQuery}]...`);
+    console.log("[DEBUG 1] Iniciando Sincro. URL generada:", url);
+    console.log("[DEBUG 2] API Key presente:", !!process.env.OUTSCRAPER_API_KEY);
 
     if (!db) {
         console.error("❌ SYSTEM_FATAL: DATABASE_URL missing or connection refused.");
@@ -67,37 +75,44 @@ export async function runProspectingSync(nicheQuery: string = "clinica OR esteti
             throw new Error("CONFIG_ERROR: Falta OUTSCRAPER_API_KEY en el entorno.");
         }
 
-        // Búsqueda Dinámica con Ancla de Ubicación optimizada
-        const locationAnchor = "cerca de Santa Rosa 1016 Cordoba Argentina";
-        const finalQuery = encodeURIComponent(`${nicheQuery} ${locationAnchor}`);
-        const limit = 30; // Límite estricto para proteger cuota
-        const url = `https://api.app.outscraper.com/maps/search-v2?query=${finalQuery}&limit=${limit}&language=es`;
-
         const response = await fetch(url, {
             headers: { 'X-API-KEY': apiKey }
         });
+
+        console.log("[DEBUG 3] HTTP Status Outscraper:", response.status, response.statusText);
 
         if (!response.ok) {
             throw new Error(`API_ERROR: Outscraper respondió con status ${response.status}`);
         }
 
         const data = await response.json();
+        // Mostrar las primeras 200 letras de la respuesta cruda para ver si es un Error o un Task ID
+        console.log("[DEBUG 4] Respuesta Cruda JSON:", JSON.stringify(data).substring(0, 200));
 
         if (!data.data || !data.data[0]) {
+            console.log("[DEBUG 5] FALLO: data.data[0] es undefined. La API no devolvió el array de lugares.");
             return {
                 success: false,
-                error: `CERO_RESULTADOS: No se localizaron nuevos locales del nicho especifico en esta zona de barrido.`
+                error: `CERO_RESULTADOS (DEBUG): La API de extracción no devolvió el formato esperado o falló la búsqueda.`
             };
         }
 
         const places = data.data[0];
+        console.log(`[DEBUG 6] ÉXITO DE API: Se recibieron ${places.length} locales crudos. Iniciando filtrado...`);
 
-        // FILTRO ESTRICTO (CRÍTICO): Con teléfono y SIN página web oficial
+        // Inspeccionar un local crudo para ver si las propiedades 'phone' o 'site' cambiaron de nombre
+        if (places.length > 0) {
+            console.log("[DEBUG 7] Muestra de Propiedades del Local 1:", Object.keys(places[0]).join(", "));
+        }
+
+        // FILTRO ESTRICTO (RELAJADO PARA DEBUG): Con teléfono y SIN página web oficial
         const filteredLeads = places
             .filter((place: any) => {
                 // Tiene que tener teléfono Y (no tener sitio web OR el sitio web es un string vacío)
-                const hasPhone = place.phone && place.phone.trim() !== '';
-                const noWebsite = !place.site || place.site.trim() === '';
+                const hasPhone = place.phone && String(place.phone).trim() !== '';
+                // Acepta undefined, null, string vacío, o si el campo se llama 'website' en lugar de 'site'
+                const siteUrl = place.site || place.website;
+                const noWebsite = !siteUrl || String(siteUrl).trim() === '';
                 return hasPhone && noWebsite;
             })
             .map((place: any) => ({
@@ -111,10 +126,12 @@ export async function runProspectingSync(nicheQuery: string = "clinica OR esteti
                 status: 'cold',
             }));
 
+        console.log(`[DEBUG 8] Tras filtrado estricto, quedaron ${filteredLeads.length} prospectos listos para NeonDB.`);
+
         if (filteredLeads.length === 0) {
             return {
                 success: false,
-                error: `BARRIDO COMPLETADO: Se analizaron ${places.length} locales del nicho seleccionado. Todos ya poseen sitio web oficial o carecen de teléfono. Sugerencia: Cambiar el nicho en el selector.`
+                error: `BARRIDO COMPLETADO: Se analizaron ${places.length} locales. Todos poseen sitio web oficial según el motor de filtrado v6.`
             };
         }
 
