@@ -1,8 +1,10 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/analytics/page": "app/analytics/page.js",
-  "/page": "app/page.js",
   "/api/whatsapp/qr/route": "app/api/whatsapp/qr/route.js",
+  "/analytics/page": "app/analytics/page.js",
   "/api/cron/sync/route": "app/api/cron/sync/route.js",
-  "/prospects/page": "app/prospects/page.js"
+  "/prospects/page": "app/prospects/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/page": "app/page.js",
+  "/templates/page": "app/templates/page.js"
 }

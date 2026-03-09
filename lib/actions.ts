@@ -202,6 +202,26 @@ export async function createTemplate(title: string, content: string) {
     }
 }
 
+export async function deleteTemplate(id: string) {
+    try {
+        if (!db) return { success: false };
+        await db.delete(message_templates).where(eq(message_templates.id, id));
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}
+
+export async function updateTemplate(id: string, title: string, content: string) {
+    try {
+        if (!db) return { success: false };
+        await db.update(message_templates).set({ title, content }).where(eq(message_templates.id, id));
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}
+
 // --- Profile ---
 export async function getProfile() {
     try {
