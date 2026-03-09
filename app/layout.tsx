@@ -13,8 +13,11 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="es" className="dark min-h-screen overflow-x-hidden">
-            <body className={`${inter.className} bg-[#0a0a0a] text-white antialiased min-h-screen relative overflow-x-hidden`}>
+        <html lang="es" className="dark min-h-screen bg-black overflow-x-hidden">
+            <body className={`${inter.className} text-white antialiased min-h-screen relative overflow-x-hidden bg-transparent`}>
+                {/* Global Background Layer - The Fallback Black Background */}
+                <div className="fixed inset-0 bg-[#0a0a0a] z-[-20]" />
+
                 {/* Global Background Video - Liquid Luxury Integration */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -33,9 +36,11 @@ export default function RootLayout({
                     </video>
                 </motion.div>
 
-                <LanguageProvider>
-                    {children}
-                </LanguageProvider>
+                <div className="relative z-0">
+                    <LanguageProvider>
+                        {children}
+                    </LanguageProvider>
+                </div>
             </body>
         </html>
     );

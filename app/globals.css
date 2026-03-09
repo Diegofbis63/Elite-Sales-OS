@@ -55,7 +55,8 @@
 
   html,
   body {
-    @apply bg-[#0a0a0a] text-white antialiased;
+    @apply text-white antialiased;
+    background-color: transparent;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     scroll-behavior: smooth;
   }
