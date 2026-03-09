@@ -12,11 +12,12 @@ import {
     Sparkles,
     Bell,
     Briefcase,
-    Globe
+    Globe,
+    LogOut
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { getProfile, updateProfile } from '@/lib/actions';
+import { getProfile, updateProfile, logoutAction, getCurrentUser } from '@/lib/actions';
 import { ProfileModal } from './ProfileModal';
 import { useLanguage } from '@/components/LanguageContext';
 
@@ -62,7 +63,14 @@ export const Sidebar = () => {
                     );
                 })}
             </nav>
-            <div className="p-8 border-t border-white/5">
+            <div className="p-8 border-t border-white/5 space-y-4">
+                <button
+                    onClick={() => logoutAction()}
+                    className="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-white/20 hover:text-red-400 hover:bg-red-400/5 transition-all group"
+                >
+                    <LogOut className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em]">{t?.('nav_logout') || 'Log Out'}</span>
+                </button>
                 <div className="p-6 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/5 text-center">
                     <p className="text-2xl font-serif italic text-white/20 leading-none italic uppercase tracking-tighter">Elite Agency</p>
                     <p className="text-[9px] text-white/10 uppercase tracking-[0.4em] font-black mt-2">OS v4.0 Platinum</p>
@@ -112,6 +120,13 @@ export const Header = ({ profile, onEditProfile, onSearch }: { profile: any, onE
                     <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/30">{t('header_sync')}</span>
                 </div>
 
+                {profile?.is_demo && (
+                    <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500">
+                        <Sparkles className="w-3 h-3 animate-bounce" />
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em]">Demo Mode Active</span>
+                    </div>
+                )}
+
                 <div className="flex items-center gap-4 group cursor-pointer" onClick={onEditProfile}>
                     <div className="text-right hidden sm:block">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">{profile?.full_name || t('header_director')}</p>
@@ -137,8 +152,8 @@ export const EliteLayout = ({ children, onSearch }: { children: React.ReactNode,
     const [showProfileModal, setShowProfileModal] = useState(false);
 
     const fetchProfile = async () => {
-        const p = await getProfile();
-        setProfile(p);
+        const [p, u] = await Promise.all([getProfile(), getCurrentUser()]);
+        setProfile({ ...p, role: u?.role || p?.role, is_demo: u?.role === 'demo' });
     };
 
     useEffect(() => {

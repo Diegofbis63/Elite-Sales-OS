@@ -1,10 +1,13 @@
 "use server";
 
 import { db } from '../db';
-import { prospects, outbox, message_templates, sync_history, user_profile, projects } from '../db/schema';
+import { prospects, outbox, message_templates, sync_history, user_profile, projects, users } from '../db/schema';
 import { desc, eq, sql, isNull, gte, lte, and } from 'drizzle-orm';
 import { v2 as cloudinary } from 'cloudinary';
 import { runProspectingSync, injectLeads } from './sync-engine';
+import { login as setSession, logout as clearSession, getSession } from './auth';
+import bcrypt from 'bcryptjs';
+import { redirect } from 'next/navigation';
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -39,6 +42,12 @@ export async function verifyConnection() {
 }
 
 export async function syncProspects(nicheQuery?: string) {
+    const session = await getSession();
+    if (session?.user?.role === 'demo') {
+        console.log("Demo Mode: Simulating sync");
+        await new Promise(r => setTimeout(r, 2000));
+        return { success: true, leadsAdded: 15 };
+    }
     return await runProspectingSync(nicheQuery);
 }
 
@@ -46,13 +55,20 @@ export async function syncProspects(nicheQuery?: string) {
 export async function getProspects() {
     try {
         if (!db) return [];
+
+        const session = await getSession();
+        if (session?.user?.role === 'demo') {
+            return [
+                { id: 'demo1', name: 'Dr. Jane Doe', business_name: 'Premium Dental NY', status: 'interested', industry: 'Health', phone: '+123456789', last_interaction: new Date(), total_price: '500', monthly_maintenance: '50' },
+                { id: 'demo2', name: 'John Smith', business_name: 'Luxury Spa & Wellness', status: 'contacted', industry: 'Beauty', phone: '+987654321', last_interaction: new Date(), total_price: '0', monthly_maintenance: '0' },
+                { id: 'demo3', name: 'Alice Johnson', business_name: 'Elite Gym', status: 'cold', industry: 'Fitness', phone: '+112233445', last_interaction: new Date(), total_price: '0', monthly_maintenance: '0' },
+                { id: 'demo4', name: 'Mio Test (Demo)', business_name: 'Enterprise Demo Corp', status: 'closed', industry: 'Tech', phone: '+549111222333', last_interaction: new Date(), total_price: '1500', monthly_maintenance: '150' },
+            ];
+        }
+
         const results = await db.query.prospects.findMany({
             orderBy: [desc(prospects.createdAt)],
         });
-
-        if (results.length === 0) {
-            return [];
-        }
         return results;
     } catch (error) {
         console.error("Error fetching prospects:", error);
@@ -63,6 +79,9 @@ export async function getProspects() {
 export async function createProspect(data: any) {
     try {
         if (!db) throw new Error("Base de datos no disponible.");
+        const session = await getSession();
+        if (session?.user?.role === 'demo') return { success: true };
+
         await db.insert(prospects as any).values({
             ...data,
             maps_id: data.maps_id || `manual_${Date.now()}`
@@ -77,6 +96,9 @@ export async function createProspect(data: any) {
 export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed' | 'cancelled') {
     try {
         if (!db) return { success: false };
+        const session = await getSession();
+        if (session?.user?.role === 'demo') return { success: true }; // False success for demo
+
         await db.update(prospects).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
         return { success: true };
     } catch (error) {
@@ -87,6 +109,9 @@ export async function updateProspectStatus(id: string, status: 'cold' | 'contact
 export async function cancelDeal(id: string) {
     try {
         if (!db) return { success: false };
+        const session = await getSession();
+        if (session?.user?.role === 'demo') return { success: true };
+
         await db.update(prospects).set({
             status: 'cancelled',
             total_price: '0',
@@ -174,6 +199,12 @@ export async function importLeads(leads: any[]) {
 export async function queueMessage(phone: string, message: string, mediaUrl?: string) {
     try {
         if (!db) return { success: false };
+        const session = await getSession();
+        if (session?.user?.role === 'demo') {
+            console.log("Demo Mode: Simulating WhatsApp queue for", phone);
+            return { success: true };
+        }
+
         await db.insert(outbox as any).values({
             phone,
             message,
@@ -252,6 +283,9 @@ export async function getProfile() {
 export async function updateProfile(data: any) {
     try {
         if (!db) return { success: false, error: "No DB" };
+        const session = await getSession();
+        if (session?.user?.role === 'demo') return { success: true };
+
         console.log("Updating profile with data:", { ...data, photo_base64: data.photo_base64 ? 'BASE64_STUFF' : 'empty' });
 
         await db.update(user_profile).set({
@@ -311,6 +345,18 @@ export async function getDashboardStats() {
                 totalProspects: 0
             };
         }
+        const session = await getSession();
+        if (session?.user?.role === 'demo') {
+            return {
+                projectedRevenue: "$12,450",
+                hotProspects: 8,
+                conversionRate: "15.4%",
+                messagesSent: "342",
+                withoutWeb: 12,
+                totalProspects: 45
+            };
+        }
+
         const all = await getProspects();
         const totalProspects = all.length;
         const closed = all.filter(p => p.status === 'closed');
@@ -426,6 +472,8 @@ export async function getProjectsDB() {
 export async function upsertProject(id: string, data: any) {
     try {
         if (!db) return { success: false };
+        const session = await getSession();
+        if (session?.user?.role === 'demo') return { success: true };
 
         // Verificar si existe para decidir insert o update
         const existing = await db.query.projects.findFirst({
@@ -452,10 +500,53 @@ export async function upsertProject(id: string, data: any) {
 export async function deleteProjectDB(id: string) {
     try {
         if (!db) return { success: false };
+        const session = await getSession();
+        if (session?.user?.role === 'demo') return { success: true };
+
         await db.delete(projects).where(eq(projects.id, id));
         return { success: true };
     } catch (error) {
         console.error("Error deleting project:", error);
         return { success: false };
     }
+}
+
+// --- Authentication ---
+export async function loginAction(formData: FormData) {
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+
+    try {
+        if (!db) return { success: false, error: "Database not available" };
+
+        const user = await db.query.users.findFirst({
+            where: eq(users.username, username)
+        });
+
+        if (!user) return { success: false, error: "Invalid credentials" };
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) return { success: false, error: "Invalid credentials" };
+
+        await setSession({
+            id: user.id,
+            username: user.username,
+            role: user.role
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Login error:", error);
+        return { success: false, error: "Authentication failed" };
+    }
+}
+
+export async function logoutAction() {
+    await clearSession();
+    redirect('/login');
+}
+
+export async function getCurrentUser() {
+    const session = await getSession();
+    return session?.user || null;
 }

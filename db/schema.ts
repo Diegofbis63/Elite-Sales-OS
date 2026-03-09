@@ -70,3 +70,11 @@ export const projects = pgTable('projects', {
     estimated_price: text('estimated_price').default('0'),
     created_at: timestamp('created_at').defaultNow(),
 });
+
+export const users = pgTable('users', {
+    id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+    username: text('username').notNull().unique(),
+    password: text('password').notNull(),
+    role: text('role').notNull().default('demo'), // 'admin' | 'demo'
+    created_at: timestamp('created_at').defaultNow(),
+});
