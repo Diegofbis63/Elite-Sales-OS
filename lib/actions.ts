@@ -8,6 +8,7 @@ import { runProspectingSync, injectLeads } from './sync-engine';
 import { login as setSession, logout as clearSession, getSession } from './auth';
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
+import { INITIAL_PROJECTS, Project } from './projects';
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -461,7 +462,26 @@ export async function getNotifications() {
 export async function getProjectsDB() {
     try {
         if (!db) return [];
-        const results = await db.query.projects.findMany();
+        let results = await db.query.projects.findMany();
+
+        // Verificamos si faltan proyectos del set inicial (para evitar que desaparezcan al editar uno solo)
+        const missing = INITIAL_PROJECTS.filter(ip => !results.find(r => r.id === ip.id));
+
+        if (missing.length > 0) {
+            console.log(`Missing ${missing.length} initial projects in DB. Seeding...`);
+            for (const p of missing) {
+                await db.insert(projects).values({
+                    id: p.id,
+                    es: p.es as any,
+                    en: p.en as any,
+                    vercel_url: p.vercel_url,
+                    doc_url: p.doc_url,
+                    estimated_price: p.estimated_price
+                }).onConflictDoNothing();
+            }
+            results = await db.query.projects.findMany();
+        }
+
         return results;
     } catch (error) {
         console.error("Error fetching projects:", error);
