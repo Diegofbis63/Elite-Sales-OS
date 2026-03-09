@@ -2,9 +2,10 @@
 
 import { db } from '../db';
 import { prospects, outbox, message_templates, sync_history } from '../db/schema';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql, isNull } from 'drizzle-orm';
 import { v2 as cloudinary } from 'cloudinary';
-import { runProspectingSync } from './sync-engine';
+import { runProspectingSync, injectLeads } from './sync-engine';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -77,6 +78,40 @@ export async function updateProspectStatus(id: string, status: 'cold' | 'contact
         return { success: true };
     } catch (error) {
         return { success: false };
+    }
+}
+
+export async function importLeads(leads: any[]) {
+    try {
+        const added = await injectLeads(leads, "Importación Manual");
+        return { success: true, leadsAdded: added };
+    } catch (error) {
+        console.error("Error importando leads:", error);
+        return { success: false, error: String(error) };
+    }
+}
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
+export async function chatWithAI(message: string, history: any[] = []) {
+    try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3.1-flash-lite-preview",
+            tools: [{ googleSearchRetrieval: {} } as any]
+        }, { apiVersion: 'v1beta' });
+
+        const chat = model.startChat({
+            history: history,
+            generationConfig: {
+                maxOutputTokens: 2000,
+            },
+        });
+
+        const result = await chat.sendMessage(message);
+        return { success: true, text: result.response.text() };
+    } catch (error: any) {
+        console.error("AI Chat Error:", error);
+        return { success: false, error: error.message };
     }
 }
 

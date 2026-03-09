@@ -51,7 +51,7 @@ async function getLeadsFromMapsAPI(): Promise<Lead[]> {
     }
 }
 
-async function injectLeads(leads: Lead[], source: string): Promise<number> {
+export async function injectLeads(leads: Lead[], source: string): Promise<number> {
     let totalLeadsAdded = 0;
     for (const lead of leads) {
         try {

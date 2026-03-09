@@ -36,7 +36,9 @@ import {
     uploadToCloudinary,
     createProspect,
     createTemplate,
-    processOutbox
+    processOutbox,
+    importLeads,
+    chatWithAI
 } from '@/lib/actions';
 
 // --- Components ---
@@ -537,10 +539,17 @@ const NewLeadModal = ({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose
     );
 };
 
-const NewTemplateModal = ({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose: () => void, onRefresh: () => void }) => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
+const NewTemplateModal = ({ isOpen, onClose, onRefresh, initialTitle = '', initialContent = '' }: { isOpen: boolean, onClose: () => void, onRefresh: () => void, initialTitle?: string, initialContent?: string }) => {
+    const [title, setTitle] = useState(initialTitle);
+    const [content, setContent] = useState(initialContent);
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setTitle(initialTitle);
+            setContent(initialContent);
+        }
+    }, [isOpen, initialTitle, initialContent]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -561,13 +570,16 @@ const NewTemplateModal = ({ isOpen, onClose, onRefresh }: { isOpen: boolean, onC
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
-                        <h3 className="text-xl font-serif mb-8 tracking-widest uppercase">Nueva <span className="text-white/20 italic">Estrategia</span></h3>
+                        <h3 className="text-xl font-serif mb-8 tracking-widest uppercase">Estrategia <span className="text-white/20 italic">Personalizada</span></h3>
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <input placeholder="Título de la Campaña" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={title} onChange={e => setTitle(e.target.value)} />
-                            <textarea placeholder="Cuerpo del Mensaje ({nombre}, {negocio})" required className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={content} onChange={e => setContent(e.target.value)} />
-                            <button disabled={isSaving} className="w-full py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl">
-                                {isSaving ? 'Guardando...' : 'Guardar Estrategia'}
-                            </button>
+                            <input placeholder="Título de la Campaña" required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white" value={title} onChange={e => setTitle(e.target.value)} />
+                            <textarea placeholder="Cuerpo del Mensaje ({nombre}, {negocio})" required className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white" value={content} onChange={e => setContent(e.target.value)} />
+                            <div className="flex gap-4">
+                                <button type="button" onClick={onClose} className="flex-1 py-4 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-[0.3em] rounded-xl hover:bg-white/5 transition-all">Cancelar</button>
+                                <button disabled={isSaving} className="flex-[2] py-4 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl">
+                                    {isSaving ? 'Guardando...' : 'Guardar Estrategia'}
+                                </button>
+                            </div>
                         </form>
                     </motion.div>
                 </div>
@@ -580,6 +592,7 @@ const TemplatesList = () => {
     const [templates, setTemplates] = useState<any[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [showNewModal, setShowNewModal] = useState(false);
+    const [modalInitial, setModalInitial] = useState({ title: '', content: '' });
 
     const fetchTemplates = () => {
         setIsFetching(true);
@@ -587,6 +600,11 @@ const TemplatesList = () => {
             setTemplates(data);
             setIsFetching(false);
         });
+    };
+
+    const openNewModal = (title = '', content = '') => {
+        setModalInitial({ title, content });
+        setShowNewModal(true);
     };
 
     useEffect(() => {
@@ -601,46 +619,74 @@ const TemplatesList = () => {
                     <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">Activos de persuasión para cierre inmediato.</p>
                 </div>
                 <button
-                    onClick={() => setShowNewModal(true)}
+                    onClick={() => openNewModal()}
                     className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full transition-all hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] flex items-center gap-4"
                 >
                     <Plus className="w-5 h-5" /> Nueva Apertura
                 </button>
             </div>
 
-            <NewTemplateModal isOpen={showNewModal} onClose={() => setShowNewModal(false)} onRefresh={fetchTemplates} />
+            <NewTemplateModal
+                isOpen={showNewModal}
+                onClose={() => setShowNewModal(false)}
+                onRefresh={fetchTemplates}
+                initialTitle={modalInitial.title}
+                initialContent={modalInitial.content}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {isFetching ? (
                     <div className="col-span-full py-20 text-center text-white/10 uppercase tracking-widest text-[10px]">Cargando protocolos de copia...</div>
-                ) : templates.length === 0 ? (
-                    <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl text-white/20 uppercase tracking-widest text-[10px]">No hay estrategias registradas.</div>
-                ) : templates.map((tpl, i) => (
-                    <SpotlightCard key={tpl.id} delay={i * 0.1} className="p-12 group h-full flex flex-col justify-between cursor-default">
-                        <div className="space-y-12">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-xl font-serif font-light tracking-widest text-white hover:text-cyan-400 transition-colors duration-500 uppercase">{tpl.title}</h3>
-                                <div className="p-2.5 bg-white/[0.03] rounded-xl border border-white/10">
-                                    <MessageSquare className="w-4.5 h-4.5 text-white/20" />
+                ) : (
+                    <>
+                        {/* Predefined Templates Section */}
+                        <div className="col-span-full border-b border-white/5 pb-10 mb-10">
+                            <h3 className="text-[10px] text-white/20 uppercase tracking-[0.5em] font-black mb-10">Plantillas Maestras Predefinidas (Editables)</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {[
+                                    { title: 'Apertura Empática', content: 'Hola {nombre}, vi tu negocio {negocio} en Córdoba y me encantó lo que hacen. Noté que aún no tienen un sitio web optimizado, ¿te interesaría ver cómo podemos elevar su presencia digital?' },
+                                    { title: 'Oferta Directa Luxury', content: 'Estimados de {negocio}, estamos seleccionando 3 negocios en Córdoba para una transformación digital gratuita de 7 días. ¿Le gustaría a {nombre} ser el primero?' },
+                                    { title: 'Seguimiento High-Stake', content: 'Hola {nombre}, sigo esperando tu respuesta sobre el upgrade de {negocio}. El mercado de Córdoba se mueve rápido, no te quedes atrás.' }
+                                ].map((tpl, i) => (
+                                    <div key={i} className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-cyan-500/30 transition-all cursor-pointer"
+                                        onClick={() => openNewModal(tpl.title, tpl.content)}>
+                                        <div className="text-[10px] font-black uppercase text-cyan-400/60 mb-4">{tpl.title}</div>
+                                        <p className="text-[11px] text-white/30 leading-relaxed italic line-clamp-3">"{tpl.content}"</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {templates.length === 0 ? (
+                            <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl text-white/20 uppercase tracking-widest text-[10px]">No hay estrategias personalizadas registradas.</div>
+                        ) : templates.map((tpl, i) => (
+                            <SpotlightCard key={tpl.id} delay={i * 0.1} className="p-12 group h-full flex flex-col justify-between cursor-default">
+                                <div className="space-y-12">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xl font-serif font-light tracking-widest text-white hover:text-cyan-400 transition-colors duration-500 uppercase">{tpl.title}</h3>
+                                        <div className="p-2.5 bg-white/[0.03] rounded-xl border border-white/10">
+                                            <MessageSquare className="w-4.5 h-4.5 text-white/20" />
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-white/40 leading-[2.2] font-light italic tracking-wide">
+                                        "{tpl.content}"
+                                    </p>
                                 </div>
-                            </div>
-                            <p className="text-sm text-white/40 leading-[2.2] font-light italic tracking-wide">
-                                "{tpl.content}"
-                            </p>
-                        </div>
-                        <div className="mt-14 flex items-center justify-between pt-12 border-t border-white/5">
-                            <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em]">Estrategia Elite / v2.1</div>
-                            <div className="flex gap-5 opacity-0 group-hover:opacity-100 transition-all duration-700">
-                                <button className="p-3.5 bg-white/5 rounded-full hover:bg-white/10 transition-colors border border-white/5">
-                                    <Edit2 className="w-3.5 h-3.5 text-white/40" />
-                                </button>
-                                <button className="p-3.5 bg-white/5 rounded-full hover:bg-red-500/20 transition-colors border border-white/5">
-                                    <Trash2 className="w-3.5 h-3.5 text-red-400/40" />
-                                </button>
-                            </div>
-                        </div>
-                    </SpotlightCard>
-                ))}
+                                <div className="mt-14 flex items-center justify-between pt-12 border-t border-white/5">
+                                    <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em]">Estrategia Elite / v2.1</div>
+                                    <div className="flex gap-5 opacity-0 group-hover:opacity-100 transition-all duration-700">
+                                        <button className="p-3.5 bg-white/5 rounded-full hover:bg-white/10 transition-colors border border-white/5">
+                                            <Edit2 className="w-3.5 h-3.5 text-white/40" />
+                                        </button>
+                                        <button className="p-3.5 bg-white/5 rounded-full hover:bg-red-500/20 transition-colors border border-white/5">
+                                            <Trash2 className="w-3.5 h-3.5 text-red-400/40" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </SpotlightCard>
+                        ))}
+                    </>
+                )}
             </div>
         </div>
     );
@@ -798,6 +844,65 @@ const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefre
         }
     };
 
+    const [chatInput, setChatInput] = useState('');
+    const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'model', parts: { text: string }[] }[]>([]);
+    const [isAILoading, setIsAILoading] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+
+    const handleAIChat = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!chatInput.trim() || isAILoading) return;
+
+        const userMsg = chatInput;
+        setChatInput('');
+        setChatHistory(prev => [...prev, { role: 'user', parts: [{ text: userMsg }] }]);
+        setIsAILoading(true);
+
+        try {
+            const res = await chatWithAI(userMsg, chatHistory);
+            if (res.success) {
+                setChatHistory(prev => [...prev, { role: 'model', parts: [{ text: res.text || '' }] }]);
+            } else {
+                alert("Error de Conexión Neural: " + res.error);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsAILoading(false);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsImporting(true);
+        try {
+            const text = await file.text();
+            let leads: any = [];
+            if (file.name.endsWith('.json')) {
+                const parsed = JSON.parse(text);
+                leads = parsed.leads || parsed;
+            } else {
+                const lines = text.split('\n');
+                leads = lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    return { business_name: values[0], phone: values[1], name: values[2] || 'Gerencia' };
+                }).filter(l => l.business_name);
+            }
+            const res = await importLeads(leads);
+            if (res.success) {
+                alert(`INGESTA COMPLETADA: ${res.leadsAdded} prospectos integrados.`);
+                onRefresh();
+            } else {
+                alert("FALLO EN INGESTA: " + res.error);
+            }
+        } catch (err) {
+            alert("ERROR DE FORMATO: El archivo no es válido.");
+        } finally {
+            setIsImporting(false);
+        }
+    };
+
     const kpiData = [
         { label: 'Ingresos Proyectados', value: stats?.projectedRevenue || '$0', trend: '+14% Mensual', color: 'cyan' },
         { label: 'Leads de Alta Prioridad', value: stats?.withoutWeb || '0', trend: 'Sincronizado', color: 'purple' },
@@ -818,7 +923,7 @@ const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefre
                     className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center gap-4 disabled:opacity-50"
                 >
                     {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                    {isSyncing ? 'Sincronizando' : 'Iniciar Sincro'}
+                    {isSyncing ? 'Sincronizando' : 'Sincro Automática'}
                 </button>
             </div>
 
@@ -842,60 +947,86 @@ const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefre
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2">
                     <SpotlightCard className="p-10 min-h-[500px] flex flex-col group">
-                        <div className="flex items-center justify-between mb-16">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Frecuencia de Captación de Leads</h3>
-                            <div className="px-5 py-2.5 border border-white/10 rounded-full text-[9px] font-mono text-white/40 tracking-widest uppercase bg-white/[0.02]">
-                                Real-Time Stream
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">AI Intelligence Chat</h3>
+                            <div className="px-5 py-2.5 border border-white/10 rounded-full text-[9px] font-mono text-cyan-400 tracking-widest uppercase bg-cyan-400/5">
+                                Live Neural Link
                             </div>
                         </div>
-                        <div className="flex-1 flex items-end gap-6 h-64 px-4 overflow-hidden relative">
-                            <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/[0.01] to-transparent pointer-events-none" />
-                            {[45, 85, 55, 95, 75, 88, 62].map((h, i) => (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-8 h-full">
-                                    <div className="w-full relative h-full bg-white/[0.02] rounded-2xl overflow-hidden flex items-end border border-white/5 overflow-hidden">
-                                        <motion.div
-                                            initial={{ height: 0 }}
-                                            animate={{ height: `${h}%` }}
-                                            transition={{ duration: 2.5, delay: 0.8 + (i * 0.1), ease: [0.16, 1, 0.3, 1] }}
-                                            className="w-full bg-gradient-to-t from-white/[0.1] to-white/[0.05] border-t border-white/20 group-hover:from-cyan-500/10 transition-all duration-1000"
-                                        />
-                                    </div>
-                                    <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Punt {i + 1}</span>
+
+                        <div className="flex-1 overflow-y-auto space-y-6 mb-8 custom-scrollbar pr-2 max-h-[350px]">
+                            {chatHistory.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30 px-10">
+                                    <MessageCircle className="w-12 h-12" />
+                                    <p className="text-[10px] uppercase font-black tracking-widest leading-loose">
+                                        Escribe para buscar prospectos.<br />
+                                        "Busca 15 estéticas en Córdoba y dame un JSON"
+                                    </p>
                                 </div>
-                            ))}
+                            ) : (
+                                chatHistory.map((chat, i) => (
+                                    <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[85%] p-5 rounded-2xl text-[11px] leading-relaxed tracking-wide ${chat.role === 'user' ? 'bg-white/5 border border-white/10 text-white/90' : 'bg-cyan-500/5 border border-cyan-500/10 text-cyan-50/80 shadow-[0_0_20px_rgba(34,211,238,0.05)]'}`}>
+                                            <ReactMarkdown className="prose prose-invert prose-xs">{chat.parts[0].text}</ReactMarkdown>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                            {isAILoading && (
+                                <div className="flex justify-start">
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
+                                        <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Procesando Red...</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+
+                        <form onSubmit={handleAIChat} className="relative">
+                            <input
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                placeholder="Consultar inteligencia de mercado..."
+                                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-5 pl-8 pr-20 text-[11px] font-light tracking-widest text-white/80 placeholder-white/20 focus:outline-none focus:border-cyan-500/30 transition-all border-dashed"
+                            />
+                            <button type="submit" disabled={isAILoading} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-cyan-400 hover:text-white transition-colors">
+                                <Send className="w-5 h-5" />
+                            </button>
+                        </form>
                     </SpotlightCard>
                 </div>
-                <SpotlightCard className="p-10 flex flex-col justify-between overflow-hidden">
-                    <div className="space-y-8">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Nivel de Operaciones</h3>
-                        <div className="space-y-8">
-                            {[
-                                { label: 'Motor de Scraping', status: 'Online', w: '90%' },
-                                { label: 'WhatsApp Bridge', status: 'Optimal', w: '55%' },
-                                { label: 'Gemini 2.5 Flash', status: 'Authorized', w: '85%' },
-                                { label: 'CDN Multimedios', status: 'Verified', w: '100%' },
-                            ].map((s, i) => (
-                                <div key={i} className="space-y-3">
-                                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.3em]">
-                                        <span className="text-white/60">{s.label}</span>
-                                        <span className="text-cyan-500/60 font-bold">{s.status}</span>
-                                    </div>
-                                    <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: s.w }}
-                                            transition={{ duration: 2, delay: 1.2 + (i * 0.2), ease: [0.16, 1, 0.3, 1] }}
-                                            className="h-full bg-white/40"
-                                        />
-                                    </div>
+
+                <SpotlightCard className="p-10 flex flex-col group h-full">
+                    <div className="space-y-10 h-full flex flex-col">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Strategic Ingest</h3>
+
+                        <div className="flex-1 flex flex-col">
+                            <label className="flex-1 border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.02] hover:bg-white/[0.04] hover:border-cyan-500/30 transition-all cursor-pointer group flex flex-col items-center justify-center p-8 text-center space-y-6">
+                                <input type="file" accept=".json,.csv" className="hidden" onChange={handleFileUpload} />
+                                <div className="p-6 rounded-full bg-white/5 group-hover:bg-cyan-500/20 transition-all">
+                                    {isImporting ? <Loader2 className="w-10 h-10 animate-spin text-cyan-400" /> : <Upload className="w-10 h-10 text-white/10 group-hover:text-cyan-400 transition-all" />}
                                 </div>
-                            ))}
+                                <div className="space-y-3">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/80 group-hover:text-white">Cargar Leads</p>
+                                    <p className="text-[9px] text-white/20 uppercase tracking-widest font-black leading-relaxed">JSON / CSV de Alta Fidelidad</p>
+                                </div>
+                            </label>
+
+                            <div className="mt-10 p-8 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/5">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <Sparkles className="w-4 h-4 text-cyan-400/40" />
+                                    <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Inyección Directa</span>
+                                </div>
+                                <p className="text-[10px] text-white/20 font-light leading-relaxed">
+                                    Sube el archivo extraído del chat para integrarlo sin consumir cuota.
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="mt-12 p-10 rounded-3xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/5 backdrop-blur-3xl group cursor-default">
-                        <div className="text-3xl font-serif italic text-white/40 mb-3 group-hover:text-white/60 transition-colors duration-1000">Liquid Luxury</div>
-                        <p className="text-[9px] text-white/10 uppercase tracking-[0.4em] font-black">Release v1.2.9 • Elite Edition</p>
+
+                        <div className="mt-10 pt-10 border-t border-white/5">
+                            <div className="text-3xl font-serif italic text-white/20 mb-3 group-hover:text-white/40 transition-colors duration-1000">Liquid Luxury</div>
+                            <p className="text-[9px] text-white/10 font-black uppercase tracking-[0.4em]">Elite Engine v3.1</p>
+                        </div>
                     </div>
                 </SpotlightCard>
             </div>
