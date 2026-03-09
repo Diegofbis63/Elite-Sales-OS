@@ -34,6 +34,11 @@ async function getLeadsFromMapsAPI(): Promise<Lead[]> {
     const response = await fetch(url);
     const data = await response.json();
 
+    if (data.status === "REQUEST_DENIED") {
+        console.error("❌ ERROR CRÍTICO: Google Maps API denegado. Verifica restricciones de IP en tu consola de Google Cloud.");
+        return [];
+    }
+
     if (!data.results || data.results.length === 0) {
         console.log("⚠️ Maps API no devolvió resultados en este ciclo.");
         return [];
@@ -56,7 +61,7 @@ async function injectLeads(leads: Lead[], source: string): Promise<number> {
                 name: lead.name || "Gerencia",
                 business_name: lead.business_name,
                 phone: lead.phone,
-                industry: `Sincronizado vía ${source}`,
+                industry: `Vía ${source}`,
                 rating: "4.5",
                 has_website: false,
                 maps_id: maps_id,
@@ -82,11 +87,14 @@ async function injectLeads(leads: Lead[], source: string): Promise<number> {
 export async function runProspectingSync(): Promise<SyncResult> {
     console.log(`🚀 PROTOCOLO HÍBRIDO: Iniciando ciclo inteligente...`);
 
-    const prompt = `Busca en Google Maps 12 negocios locales reales en Córdoba Capital, Argentina (estética, salud, legal o inmobiliaria) SIN sitio web. Devuelve SOLO JSON: { "leads": [{ "name", "business_name", "phone" }] }`;
+    // Usamos el modelo solicitado por el usuario que tiene más cuota (Gemini 3.1 Flash Lite)
+    const PRIMARY_MODEL = "gemini-3.1-flash-lite-preview";
+    const prompt = `Busca en Google Maps y la web 12 negocios locales reales en Córdoba Capital, Argentina (estética, salud o inmobiliaria) SIN sitio web propio. Devuelve SOLO un JSON válido: { "leads": [{ "name", "business_name", "phone" }] }`;
 
     try {
+        console.log(`📡 Consultando motor principal: ${PRIMARY_MODEL}...`);
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: PRIMARY_MODEL,
             tools: [{ googleSearchRetrieval: {} } as any]
         });
 
@@ -97,41 +105,39 @@ export async function runProspectingSync(): Promise<SyncResult> {
         if (!jsonMatch) throw new Error("IA no devolvió JSON válido.");
 
         const data = JSON.parse(jsonMatch[0]) as SyncResponse;
-        const totalLeadsAdded = await injectLeads(data.leads, "Gemini 2.0 (IA)");
+        const totalLeadsAdded = await injectLeads(data.leads, "Gemini 3.1 (IA)");
 
         return { success: true, leadsAdded: totalLeadsAdded };
 
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error("❌ FALLO MOTOR IA:", errorMessage);
+        console.error("❌ FALLO MOTOR PRINCIPAL:", errorMessage);
 
-        // Si es cuota o fallo de red, ir a CÓDIGO PURO
-        if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('fetch')) {
-            try {
-                const mapsLeads = await getLeadsFromMapsAPI();
-                if (mapsLeads.length > 0) {
-                    const added = await injectLeads(mapsLeads, "Maps API (Código Puro)");
-                    return { success: true, leadsAdded: added, note: "Pánico de cuota IA activado: Sintonizado vía Maps API directa." };
-                }
-            } catch (mapsErr: unknown) {
-                console.error("❌ FALLO MOTOR CÓDIGO PURO:", mapsErr);
+        // Fallback 1: CÓDIGO PURO (Maps API)
+        try {
+            const mapsLeads = await getLeadsFromMapsAPI();
+            if (mapsLeads.length > 0) {
+                const added = await injectLeads(mapsLeads, "Maps API Directa");
+                return { success: true, leadsAdded: added, note: "Respuesta táctica: Maps API activada debido a fallo en IA." };
             }
+        } catch (mapsErr: unknown) {
+            console.error("❌ FALLO FALLBACK MAPS:", mapsErr);
         }
 
-        // Último intento con 1.5 Flash sin herramientas (Grounding suele ser el problema de cuota)
+        // Fallback 2: IA Estable (Gemini 2.5 Flash Lite)
         try {
-            console.log("⚠️ Intento final con Gemini 1.5 (Sin Grounding)...");
-            const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            console.log("⚠️ Activando Motor Secundario (Gemini 2.5 Flash Lite)...");
+            const fallbackModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
             const fResult = await fallbackModel.generateContent(prompt);
             const fText = fResult.response.text().replace(/```json|```/g, "").trim();
             const fJsonMatch = fText.match(/\{[\s\S]*\}/);
             if (!fJsonMatch) throw new Error("Fallback falló.");
 
             const fData = JSON.parse(fJsonMatch[0]) as SyncResponse;
-            const added = await injectLeads(fData.leads, "Gemini 1.5 (Fallback)");
-            return { success: true, leadsAdded: added, note: "Resiliencia crítica: Motor fallback activado." };
+            const added = await injectLeads(fData.leads, "Gemini 2.5 (Fallback)");
+            return { success: true, leadsAdded: added, note: "Resiliencia operativa: Motor 2.5 activado." };
         } catch (fErr: any) {
-            return { success: false, error: `Protocolo Totalmente Superado: Cuota agotada en todos los motores.` };
+            return { success: false, error: `Protocolo Totalmente Superado: Cuota agotada en todos los motores. Detalle: ${errorMessage}` };
         }
     }
 }
