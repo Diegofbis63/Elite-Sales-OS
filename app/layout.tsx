@@ -1,9 +1,9 @@
 "use client";
 
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/components/LanguageContext";
+import { motion } from "framer-motion";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,7 +14,27 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es" className="dark h-full">
-            <body className={`${inter.className} bg-[#0a0a0a] text-white antialiased h-full`}>
+            <body className={`${inter.className} bg-[#0a0a0a] text-white antialiased h-full relative`}>
+                {/* Global Background Video - Liquid Luxury Integration */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.2 }}
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="fixed inset-0 z-[-10] overflow-hidden pointer-events-none"
+                >
+                    <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="w-full h-full object-cover"
+                    >
+                        <source src="/elite.mp4" type="video/mp4" />
+                    </video>
+                    {/* Subtle aesthetic overlay to maintain CRM depth */}
+                    <div className="absolute inset-0 bg-[#0a0a0a]/40" />
+                </motion.div>
+
                 <LanguageProvider>
                     {children}
                 </LanguageProvider>

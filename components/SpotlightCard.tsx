@@ -25,7 +25,7 @@ export const SpotlightCard = ({ children, className = '', delay = 0, neon = true
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay, ease: [0.23, 1, 0.32, 1] }}
-            className={`group relative rounded-[2.5rem] bg-[#0d0d0d] border border-white/5 transition-all duration-700 overflow-hidden ${className}`}
+            className={`group relative rounded-[2.5rem] bg-black/20 backdrop-blur-xl border border-white/5 transition-all duration-700 overflow-hidden ${className}`}
         >
             {/* Laser Border Effect - Using Mask Layer */}
             {neon && (

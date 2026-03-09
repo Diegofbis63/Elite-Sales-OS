@@ -78,7 +78,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
             />
 
             <SpotlightCard className="overflow-hidden border-0" neon={false}>
-                <div className="bg-[#0f0f0f]/30 backdrop-blur-3xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+                <div className="bg-black/20 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>

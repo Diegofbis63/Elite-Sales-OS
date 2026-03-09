@@ -48,7 +48,7 @@ export const Sidebar = ({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                 )}
             </AnimatePresence>
 
-            <aside className={`w-64 border-r border-white/5 bg-black/50 backdrop-blur-3xl h-full fixed left-0 top-0 flex flex-col z-[101] transition-transform duration-500 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`w-64 border-r border-white/5 bg-black/20 backdrop-blur-xl h-full fixed left-0 top-0 flex flex-col z-[101] transition-transform duration-500 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="h-24 flex items-center px-10 border-b border-white/5">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black font-black text-xs shadow-[0_0_15px_rgba(255,255,255,0.2)]">E</div>
@@ -100,7 +100,7 @@ export const Header = ({ profile, onEditProfile, onSearch, onOpenMenu }: { profi
     const { language, setLanguage, t } = useLanguage();
 
     return (
-        <header className="h-20 lg:h-24 flex items-center justify-between px-4 sm:px-6 lg:px-14 border-b border-white/5 bg-[#0a0a0a]/50 backdrop-blur-md sticky top-0 z-40">
+        <header className="h-20 lg:h-24 flex items-center justify-between px-4 sm:px-6 lg:px-14 border-b border-white/5 bg-black/20 backdrop-blur-xl sticky top-0 z-40">
             <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 flex-1 max-w-2xl">
                 <button onClick={onOpenMenu} className="lg:hidden p-2 text-white/40 hover:text-white transition-colors">
                     <LayoutDashboard className="w-5 h-5" />
@@ -188,7 +188,7 @@ export const EliteLayout = ({ children, onSearch }: { children: React.ReactNode,
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-cyan-500/30">
+        <div className="min-h-screen bg-transparent text-white selection:bg-cyan-500/30">
             <Sidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
             <main className="lg:pl-64 min-h-screen flex flex-col">
                 <Header

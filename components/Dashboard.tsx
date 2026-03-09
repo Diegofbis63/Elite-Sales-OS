@@ -106,7 +106,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2">
-                    <SpotlightCard className="p-10 min-h-[500px] flex flex-col group bg-black/40 border-cyan-500/5">
+                    <SpotlightCard className="p-10 min-h-[500px] flex flex-col group border-cyan-500/5">
                         <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.6)] animate-pulse" />

@@ -29,7 +29,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-transparent flex items-center justify-center p-6 relative overflow-hidden">
             {/* Background Effects */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full animate-pulse delay-700" />
@@ -60,7 +60,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-3xl shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative overflow-hidden group">
+                <div className="bg-black/20 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
 
                     <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
