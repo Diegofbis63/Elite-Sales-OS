@@ -7,6 +7,7 @@ import { EliteLayout } from '@/components/EliteLayout';
 import { SpotlightCard } from '@/components/SpotlightCard';
 import { verifyConnection, getProfile } from '@/lib/actions';
 import { useLanguage } from '@/components/LanguageContext';
+import { SectionHeader } from '@/components/SectionHeader';
 
 export default function SettingsPage() {
     const { t } = useLanguage();
@@ -33,11 +34,14 @@ export default function SettingsPage() {
 
     return (
         <EliteLayout>
-            <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-16 animate-in fade-in duration-1000">
-                <div className="space-y-4">
-                    <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">{t('settings_title')} <span className="text-white/20 italic">{t('settings_accent')}</span></h1>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">{t('settings_subtitle')}</p>
-                </div>
+            <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-16 animate-in fade-in duration-1000 pt-16">
+                <SectionHeader
+                    icon={Settings}
+                    label={t('settings_title')}
+                    title={t('settings_title')}
+                    accent={t('settings_accent')}
+                    subtitle={t('settings_subtitle')}
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                     <SpotlightCard className="p-12 space-y-12">

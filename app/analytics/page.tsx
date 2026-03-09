@@ -7,6 +7,7 @@ import { SpotlightCard } from '@/components/SpotlightCard';
 import { getDashboardStats } from '@/lib/actions';
 import { TrendingUp, Users, DollarSign, Target, ArrowUpRight, BarChart2 } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
+import { SectionHeader } from '@/components/SectionHeader';
 
 export default function AnalyticsPage() {
     const { t } = useLanguage();
@@ -31,11 +32,14 @@ export default function AnalyticsPage() {
 
     return (
         <EliteLayout>
-            <div className="space-y-16 animate-in fade-in duration-1000">
-                <div className="space-y-4">
-                    <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase text-center lg:text-left">{t('ana_title')} <span className="text-white/20 italic">{t('ana_accent')}</span></h1>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black text-center lg:text-left">{t('ana_subtitle')}</p>
-                </div>
+            <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-16 animate-in fade-in duration-1000 pt-16">
+                <SectionHeader
+                    icon={TrendingUp}
+                    label={t('ana_title')}
+                    title={t('ana_title')}
+                    accent={t('ana_accent')}
+                    subtitle={t('ana_subtitle')}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {metrics.map((m, i) => (

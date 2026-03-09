@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { EliteLayout } from '@/components/EliteLayout';
 import { useLanguage } from '@/components/LanguageContext';
+import { SectionHeader } from '@/components/SectionHeader';
 
 import { Project, INITIAL_PROJECTS } from '@/lib/projects';
 import { getProjectsDB, upsertProject, deleteProjectDB } from '@/lib/actions';
@@ -115,41 +116,32 @@ export default function ProjectsPage() {
 
     return (
         <EliteLayout onSearch={setSearch}>
-            <div className="max-w-[1600px] mx-auto space-y-20 animate-in fade-in slide-in-from-bottom-5 duration-1000 px-4 lg:px-0">
-                {/* Header - Larger Text */}
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 pb-14 border-b border-white/5">
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-4 text-cyan-400">
-                            <div className="p-3 bg-cyan-400/10 rounded-xl border border-cyan-400/20 shadow-[0_0_20px_rgba(34,211,238,0.2)]">
-                                <Briefcase className="w-6 h-6" />
+            <div className="max-w-[1600px] mx-auto space-y-20 animate-in fade-in slide-in-from-bottom-5 duration-1000 px-4 lg:px-0 pt-16">
+                <SectionHeader
+                    icon={Briefcase}
+                    label={t('projects_title_main')}
+                    title={t('projects_title_main')}
+                    accent={t('projects_title_accent')}
+                    subtitle={t('projects_subtitle')}
+                    rightElement={
+                        <div className="flex items-center gap-8">
+                            <div className="px-10 py-6 bg-white/[0.03] border border-white/5 rounded-[2rem] backdrop-blur-3xl flex items-center gap-6">
+                                <Rocket className="w-5 h-5 text-white/20" />
+                                <div className="text-left">
+                                    <p className="text-3xl font-serif text-white leading-none">{projects.length}</p>
+                                    <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-black mt-2">{t('projects_listed')}</p>
+                                </div>
                             </div>
-                            <span className="text-xs font-black uppercase tracking-[0.5em]">{t('projects_title_main')}</span>
+                            <button
+                                onClick={handleAddNew}
+                                className="h-20 px-10 bg-white text-black rounded-[2rem] hover:scale-105 transition-all shadow-xl shadow-white/5 flex items-center justify-center gap-4 group"
+                            >
+                                <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
+                                <span className="text-xs font-black uppercase tracking-[0.2em]">{t('projects_new_asset')}</span>
+                            </button>
                         </div>
-                        <h1 className="text-8xl font-sans font-black tracking-tighter text-white leading-none">
-                            {t('projects_title_main').toUpperCase()} <span className="text-white/20 italic font-serif">{t('projects_title_accent').toUpperCase()}</span>
-                        </h1>
-                        <p className="text-2xl text-white/40 font-light tracking-wide max-w-3xl leading-relaxed">
-                            {t('projects_subtitle')}
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-8">
-                        <div className="px-10 py-6 bg-white/[0.03] border border-white/5 rounded-[2rem] backdrop-blur-3xl flex items-center gap-6">
-                            <Rocket className="w-5 h-5 text-white/20" />
-                            <div className="text-left">
-                                <p className="text-3xl font-serif text-white leading-none">{projects.length}</p>
-                                <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-black mt-2">{t('projects_listed')}</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleAddNew}
-                            className="h-14 px-8 bg-white text-black rounded-full hover:scale-105 transition-all shadow-xl shadow-white/5 flex items-center justify-center gap-3 group"
-                        >
-                            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                            <span className="hidden lg:inline text-[10px] font-black uppercase tracking-[0.2em]">{t('projects_new_asset')}</span>
-                        </button>
-                    </div>
-                </div>
+                    }
+                />
 
                 {/* Projects Grid - Balanced Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -246,123 +238,125 @@ export default function ProjectsPage() {
                         );
                     })}
                 </div>
-            </div>
+            </div >
 
             {/* Modal de Edición - Bigger and Bilingual */}
             <AnimatePresence>
-                {isModalOpen && editingProject && (
-                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/95 backdrop-blur-3xl">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[3rem] p-16 overflow-y-auto max-h-[90vh] shadow-[0_0_100px_rgba(0,0,0,0.5)] space-y-12 relative"
-                        >
-                            <button onClick={() => setIsModalOpen(false)} className="absolute top-12 right-12 p-5 bg-white/5 rounded-full hover:bg-white/10 text-white/40 transition-all z-10">
-                                <X className="w-6 h-6" />
-                            </button>
-
-                            <div className="text-center space-y-4">
-                                <h2 className="text-5xl font-serif tracking-widest uppercase text-white/90">
-                                    {projects.find(p => p.id === editingProject.id) ? t('edit') : t('projects_new_asset')} <span className="text-white/20 italic">Asset</span>
-                                </h2>
-                                <p className="text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">{t('projects_sync_value')}</p>
-                            </div>
-
-                            <form onSubmit={handleSave} className="space-y-12">
-                                {/* Localized Content Section */}
-                                <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-8">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <Globe className="w-5 h-5 text-cyan-400" />
-                                        <h3 className="text-xs font-black uppercase tracking-widest text-white/80">{language === 'es' ? 'Contenido' : 'Content'} ({language.toUpperCase()})</h3>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_name_label')}</label>
-                                        <input
-                                            className="w-full bg-black border border-white/10 rounded-2xl p-6 text-2xl font-serif text-white outline-none focus:border-cyan-500 transition-all"
-                                            value={editingProject[language].name}
-                                            onChange={e => setEditingProject({
-                                                ...editingProject,
-                                                [language]: { ...editingProject[language], name: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_desc_label')}</label>
-                                        <textarea
-                                            rows={4}
-                                            className="w-full bg-black border border-white/10 rounded-2xl p-6 text-lg font-serif italic text-white/60 outline-none focus:border-cyan-500 transition-all resize-none leading-relaxed"
-                                            value={editingProject[language].description}
-                                            onChange={e => setEditingProject({
-                                                ...editingProject,
-                                                [language]: { ...editingProject[language], description: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-8">
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_niche_label')}</label>
-                                            <input
-                                                className="w-full bg-black border border-white/10 rounded-2xl p-6 text-xs uppercase font-black text-white/60 outline-none focus:border-cyan-500 transition-all"
-                                                value={editingProject[language].niche}
-                                                onChange={e => setEditingProject({
-                                                    ...editingProject,
-                                                    [language]: { ...editingProject[language], niche: e.target.value }
-                                                })}
-                                            />
-                                        </div>
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_yield')}</label>
-                                            <input
-                                                className="w-full bg-black border border-white/10 rounded-2xl p-6 text-xl font-serif text-white outline-none focus:border-cyan-500 transition-all"
-                                                value={editingProject[language].roi_metric}
-                                                onChange={e => setEditingProject({
-                                                    ...editingProject,
-                                                    [language]: { ...editingProject[language], roi_metric: e.target.value }
-                                                })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Global Data */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-4">
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_price_label')}</label>
-                                        <div className="relative">
-                                            < DollarSign className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-500" />
-                                            <input
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 pl-14 text-xl font-sans font-black text-cyan-500 outline-none focus:border-cyan-500 transition-all"
-                                                value={editingProject.estimated_price}
-                                                onChange={e => setEditingProject({ ...editingProject, estimated_price: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{language === 'es' ? 'Despliegue en' : 'Deployment on'} Vercel</label>
-                                        <div className="relative">
-                                            <Globe className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
-                                            <input
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 pl-14 text-sm font-light text-white/60 outline-none focus:border-cyan-500 transition-all"
-                                                value={editingProject.vercel_url}
-                                                onChange={e => setEditingProject({ ...editingProject, vercel_url: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button type="submit" className="w-full h-24 bg-white text-black text-[13px] font-black uppercase tracking-[0.6em] rounded-[2.5rem] hover:shadow-[0_20px_60px_rgba(255,255,255,0.25)] hover:-translate-y-1 transition-all flex items-center justify-center gap-6">
-                                    <Save className="w-6 h-6" /> {t('projects_save')}
+                {
+                    isModalOpen && editingProject && (
+                        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/95 backdrop-blur-3xl">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[3rem] p-16 overflow-y-auto max-h-[90vh] shadow-[0_0_100px_rgba(0,0,0,0.5)] space-y-12 relative"
+                            >
+                                <button onClick={() => setIsModalOpen(false)} className="absolute top-12 right-12 p-5 bg-white/5 rounded-full hover:bg-white/10 text-white/40 transition-all z-10">
+                                    <X className="w-6 h-6" />
                                 </button>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-        </EliteLayout>
+
+                                <div className="text-center space-y-4">
+                                    <h2 className="text-5xl font-serif tracking-widest uppercase text-white/90">
+                                        {projects.find(p => p.id === editingProject.id) ? t('edit') : t('projects_new_asset')} <span className="text-white/20 italic">Asset</span>
+                                    </h2>
+                                    <p className="text-[10px] text-cyan-500 uppercase tracking-[0.4em] font-black">{t('projects_sync_value')}</p>
+                                </div>
+
+                                <form onSubmit={handleSave} className="space-y-12">
+                                    {/* Localized Content Section */}
+                                    <div className="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-8">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <Globe className="w-5 h-5 text-cyan-400" />
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-white/80">{language === 'es' ? 'Contenido' : 'Content'} ({language.toUpperCase()})</h3>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_name_label')}</label>
+                                            <input
+                                                className="w-full bg-black border border-white/10 rounded-2xl p-6 text-2xl font-serif text-white outline-none focus:border-cyan-500 transition-all"
+                                                value={editingProject[language].name}
+                                                onChange={e => setEditingProject({
+                                                    ...editingProject,
+                                                    [language]: { ...editingProject[language], name: e.target.value }
+                                                })}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_desc_label')}</label>
+                                            <textarea
+                                                rows={4}
+                                                className="w-full bg-black border border-white/10 rounded-2xl p-6 text-lg font-serif italic text-white/60 outline-none focus:border-cyan-500 transition-all resize-none leading-relaxed"
+                                                value={editingProject[language].description}
+                                                onChange={e => setEditingProject({
+                                                    ...editingProject,
+                                                    [language]: { ...editingProject[language], description: e.target.value }
+                                                })}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-8">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_niche_label')}</label>
+                                                <input
+                                                    className="w-full bg-black border border-white/10 rounded-2xl p-6 text-xs uppercase font-black text-white/60 outline-none focus:border-cyan-500 transition-all"
+                                                    value={editingProject[language].niche}
+                                                    onChange={e => setEditingProject({
+                                                        ...editingProject,
+                                                        [language]: { ...editingProject[language], niche: e.target.value }
+                                                    })}
+                                                />
+                                            </div>
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_yield')}</label>
+                                                <input
+                                                    className="w-full bg-black border border-white/10 rounded-2xl p-6 text-xl font-serif text-white outline-none focus:border-cyan-500 transition-all"
+                                                    value={editingProject[language].roi_metric}
+                                                    onChange={e => setEditingProject({
+                                                        ...editingProject,
+                                                        [language]: { ...editingProject[language], roi_metric: e.target.value }
+                                                    })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Global Data */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 px-4">
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{t('projects_price_label')}</label>
+                                            <div className="relative">
+                                                < DollarSign className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-500" />
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 pl-14 text-xl font-sans font-black text-cyan-500 outline-none focus:border-cyan-500 transition-all"
+                                                    value={editingProject.estimated_price}
+                                                    onChange={e => setEditingProject({ ...editingProject, estimated_price: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">{language === 'es' ? 'Despliegue en' : 'Deployment on'} Vercel</label>
+                                            <div className="relative">
+                                                <Globe className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 pl-14 text-sm font-light text-white/60 outline-none focus:border-cyan-500 transition-all"
+                                                    value={editingProject.vercel_url}
+                                                    onChange={e => setEditingProject({ ...editingProject, vercel_url: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" className="w-full h-24 bg-white text-black text-[13px] font-black uppercase tracking-[0.6em] rounded-[2.5rem] hover:shadow-[0_20px_60px_rgba(255,255,255,0.25)] hover:-translate-y-1 transition-all flex items-center justify-center gap-6">
+                                        <Save className="w-6 h-6" /> {t('projects_save')}
+                                    </button>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )
+                }
+            </AnimatePresence >
+        </EliteLayout >
     );
 }
 

@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MessageSquare, Lock as LucideLock, CheckCircle2, X, Edit2, Trash2, Database, Briefcase, Film, ChevronDown } from 'lucide-react';
+import { Plus, MessageSquare, Lock as LucideLock, CheckCircle2, X, Edit2, Trash2, Database, Briefcase, Film, ChevronDown, Users } from 'lucide-react';
 import { INITIAL_PROJECTS, Project } from '@/lib/projects';
 import { SpotlightCard } from './SpotlightCard';
 import { getProspects, updateProspectStatus, deleteProspect, queueMessage } from '@/lib/actions';
 import { useLanguage } from './LanguageContext';
+import { SectionHeader } from './SectionHeader';
 
 export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDeal }: { searchQuery?: string, onEdit: (p: any) => void, onOpenVault: (p: any) => void, onCloseDeal: (p: any) => void }) => {
     const { t } = useLanguage();
@@ -60,22 +61,21 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
 
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-1000">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-                <div className="space-y-4">
-                    <div className="space-y-4">
-                        <h1 className="text-5xl font-serif font-light tracking-tight text-white/95 uppercase">{t('leads_title')} <span className="text-white/20 italic">Hub</span></h1>
-                        <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">{t('leads_subtitle')}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-6">
+            <SectionHeader
+                icon={Users}
+                label={t('leads_title')}
+                title={t('leads_title')}
+                accent="Hub"
+                subtitle={t('leads_subtitle')}
+                rightElement={
                     <button
                         onClick={() => onEdit(null)}
-                        className="px-10 py-6 bg-white text-black text-[10px] font-black tracking-[0.3em] uppercase rounded-3xl flex items-center gap-3 hover:shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all whitespace-nowrap"
+                        className="h-20 px-10 bg-white text-black text-[11px] font-black tracking-[0.3em] uppercase rounded-[2rem] flex items-center gap-4 hover:shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all whitespace-nowrap"
                     >
-                        <Plus className="w-4 h-4" /> {t('leads_new_btn')}
+                        <Plus className="w-5 h-5" /> {t('leads_new_btn')}
                     </button>
-                </div>
-            </div>
+                }
+            />
 
             <SpotlightCard className="overflow-hidden border-0" neon={false}>
                 <div className="bg-[#0f0f0f]/30 backdrop-blur-3xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">

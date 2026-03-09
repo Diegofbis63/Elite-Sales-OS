@@ -20,6 +20,7 @@ import { EliteLayout } from '@/components/EliteLayout';
 import { SpotlightCard } from '@/components/SpotlightCard';
 import { getTemplates, createTemplate, deleteTemplate, updateTemplate } from '@/lib/actions';
 import { useLanguage } from '@/components/LanguageContext';
+import { SectionHeader } from '@/components/SectionHeader';
 
 const PRESET_TEMPLATES: Record<string, Record<string, { stage: string, title: string, content: string }[]>> = {
     es: {
@@ -196,58 +197,60 @@ export default function TemplatesPage() {
 
     return (
         <EliteLayout>
-            <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-16 animate-in fade-in duration-1000">
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-                    <div className="space-y-4">
-                        <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">{t('copy_title')} <span className="text-white/20 italic">{t('copy_accent')}</span></h1>
-                        <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">{t('copy_subtitle')}</p>
-                    </div>
+            <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-16 animate-in fade-in duration-1000 pt-16">
+                <SectionHeader
+                    icon={BookOpen}
+                    label={t('copy_title')}
+                    title={t('copy_title')}
+                    accent={t('copy_accent')}
+                    subtitle={t('copy_subtitle')}
+                    rightElement={
+                        <div className="flex gap-4">
+                            {/* Selector Inteligente de Nichos */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowPresets(!showPresets)}
+                                    className="h-20 px-10 bg-cyan-600 text-white text-[11px] font-black uppercase tracking-[0.4em] rounded-[2rem] hover:bg-cyan-500 transition-all flex items-center gap-4 shadow-[0_10px_30px_rgba(8,145,178,0.3)]"
+                                >
+                                    <Wand2 className="w-5 h-5" /> {t('copy_btn_inject')} <ChevronDown className={`ml-2 w-4 h-4 transition-transform ${showPresets ? 'rotate-180' : ''}`} />
+                                </button>
 
-                    <div className="flex gap-4">
-                        {/* Selector Inteligente de Nichos */}
-                        <div className="relative">
+                                <AnimatePresence>
+                                    {showPresets && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute right-0 top-full mt-4 w-80 bg-black border border-white/10 rounded-3xl overflow-hidden z-[100] shadow-2xl"
+                                        >
+                                            <div className="bg-cyan-600 px-6 py-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/90">{t('copy_niche_selector')}</p>
+                                            </div>
+                                            <div className="p-2">
+                                                {Object.keys(CURRENT_PRESETS).map((niche) => (
+                                                    <button
+                                                        key={niche}
+                                                        onClick={() => setSelectedNiche(niche)}
+                                                        className="w-full text-left px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white hover:bg-white/5 transition-all rounded-xl"
+                                                    >
+                                                        {niche}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
                             <button
-                                onClick={() => setShowPresets(!showPresets)}
-                                className="px-8 py-6 bg-cyan-600 text-white text-[11px] font-black uppercase tracking-[0.4em] rounded-3xl hover:bg-cyan-500 transition-all flex items-center gap-4 shadow-[0_10px_30px_rgba(8,145,178,0.3)]"
+                                onClick={() => handleOpenModal()}
+                                className="h-20 px-10 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-[2rem] hover:shadow-[0_20px_40px_rgba(255,255,255,0.25)] transition-all flex items-center gap-4 border border-transparent"
                             >
-                                <Wand2 className="w-5 h-5" /> {t('copy_btn_inject')} <ChevronDown className={`ml-2 w-4 h-4 transition-transform ${showPresets ? 'rotate-180' : ''}`} />
+                                <Plus className="w-6 h-6" /> {t('copy_btn_new')}
                             </button>
-
-                            <AnimatePresence>
-                                {showPresets && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className="absolute right-0 top-full mt-4 w-80 bg-black border border-white/10 rounded-3xl overflow-hidden z-[100] shadow-2xl"
-                                    >
-                                        <div className="bg-cyan-600 px-6 py-4">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-white/90">{t('copy_niche_selector')}</p>
-                                        </div>
-                                        <div className="p-2">
-                                            {Object.keys(CURRENT_PRESETS).map((niche) => (
-                                                <button
-                                                    key={niche}
-                                                    onClick={() => setSelectedNiche(niche)}
-                                                    className="w-full text-left px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white hover:bg-white/5 transition-all rounded-xl"
-                                                >
-                                                    {niche}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
                         </div>
-
-                        <button
-                            onClick={() => handleOpenModal()}
-                            className="px-10 py-6 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-3xl hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center gap-4 border border-transparent"
-                        >
-                            <Plus className="w-5 h-5" /> {t('copy_btn_new')}
-                        </button>
-                    </div>
-                </div>
+                    }
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {isFetching ? (
