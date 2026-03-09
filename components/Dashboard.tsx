@@ -55,17 +55,17 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
     ];
 
     return (
-        <div className="space-y-16 animate-in fade-in duration-1000">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+        <div className="space-y-8 lg:space-y-16 animate-in fade-in duration-500">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-10">
                 <div className="space-y-4">
-                    <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">{t('dash_title')}</h1>
+                    <h1 className="text-3xl lg:text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">{t('dash_title')}</h1>
                     <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">{t('dash_subtitle')}</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
                     <select
                         value={selectedNiche}
                         onChange={(e) => setSelectedNiche(e.target.value)}
-                        className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white/80 focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer appearance-none min-w-[300px]"
+                        className="w-full sm:w-[300px] px-8 py-4 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white/80 focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer appearance-none"
                     >
                         {NICHE_OPTIONS.map((n, i) => (
                             <option key={i} value={n.value} className="bg-[#0a0a0a] text-white">{t(n.labelKey as any)}</option>
@@ -74,7 +74,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                     <button
                         onClick={handleSync}
                         disabled={isSyncing}
-                        className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center gap-4 disabled:opacity-50"
+                        className="w-full sm:w-auto px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center justify-center gap-4 disabled:opacity-50"
                     >
                         {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                         {isSyncing ? t('dash_sync_status') : t('dash_sync_btn')}
@@ -86,7 +86,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                 {kpiData.map((kpi, i) => (
                     <SpotlightCard
                         key={i}
-                        delay={i * 0.1}
+                        delay={i * 0.05}
                         className="p-10 group cursor-pointer hover:bg-white/[0.03] transition-colors"
                         onClick={() => onNavigate(kpi.route)}
                     >

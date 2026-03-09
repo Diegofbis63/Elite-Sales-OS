@@ -24,13 +24,13 @@ export const SpotlightCard = ({ children, className = '', delay = 0, neon = true
             onClick={onClick}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay, ease: [0.23, 1, 0.32, 1] }}
+            transition={{ duration: 0.5, delay, ease: [0.23, 1, 0.32, 1] }}
             className={`group relative rounded-[2.5rem] bg-[#0d0d0d] border border-white/5 transition-all duration-700 overflow-hidden ${className}`}
         >
             {/* Laser Border Effect - Using Mask Layer */}
             {neon && (
-                <div className="absolute inset-0 pointer-events-none rounded-[2.5rem] overflow-hidden laser-mask z-30 opacity-60 group-hover:opacity-100 transition-opacity duration-1000">
-                    <div className="absolute inset-[-500%] animate-laser bg-[conic-gradient(from_0deg,transparent_0deg,transparent_10deg,#22d3ee_45deg,transparent_80deg)] brightness-150 saturate-200" />
+                <div className="absolute inset-0 pointer-events-none rounded-[2.5rem] overflow-hidden laser-mask z-30 opacity-100 transition-opacity duration-500">
+                    <div className="absolute inset-[-500%] animate-laser bg-[conic-gradient(from_0deg,transparent_0deg,transparent_10deg,#22d3ee_45deg,transparent_80deg)] brightness-[2.5] saturate-[2.5]" />
                 </div>
             )}
 

@@ -34,7 +34,7 @@ export default function SettingsPage() {
 
     return (
         <EliteLayout>
-            <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-16 animate-in fade-in duration-1000 pt-16">
+            <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8 lg:py-16 space-y-12 lg:space-y-16 animate-in fade-in duration-500 pt-16">
                 <SectionHeader
                     icon={Settings}
                     label={t('settings_title')}
@@ -43,8 +43,8 @@ export default function SettingsPage() {
                     subtitle={t('settings_subtitle')}
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    <SpotlightCard className="p-12 space-y-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+                    <SpotlightCard className="p-8 lg:p-12 space-y-8 lg:space-y-12">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <HardDrive className="w-5 h-5 text-cyan-500" />
@@ -59,16 +59,16 @@ export default function SettingsPage() {
                             </button>
                         </div>
 
-                        <div className="space-y-8">
-                            <div className={`p-8 rounded-3xl border ${dbStatus?.success ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'} transition-all`}>
-                                <div className="flex gap-6 items-start">
+                        <div className="space-y-6 lg:space-y-8">
+                            <div className={`p-6 lg:p-8 rounded-3xl border ${dbStatus?.success ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'} transition-all`}>
+                                <div className="flex gap-4 lg:gap-6 items-start">
                                     {dbStatus?.success ? (
-                                        <CheckCircle2 className="w-8 h-8 text-green-400 shrink-0" />
+                                        <CheckCircle2 className="w-6 lg:w-8 h-6 lg:h-8 text-green-400 shrink-0" />
                                     ) : (
-                                        <AlertCircle className="w-8 h-8 text-red-400 shrink-0" />
+                                        <AlertCircle className="w-6 lg:w-8 h-6 lg:h-8 text-red-400 shrink-0" />
                                     )}
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/90">{t('settings_db_status')}</p>
+                                        <p className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-white/90">{t('settings_db_status')}</p>
                                         <p className="text-sm font-serif italic text-white/40 leading-relaxed">
                                             {dbStatus?.message || t('settings_db_waiting')}
                                         </p>
@@ -76,7 +76,7 @@ export default function SettingsPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                                 <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
                                     <p className="text-[8px] text-white/20 uppercase tracking-[0.3em] font-black">{t('settings_region')}</p>
                                     <div className="flex items-center gap-3">
@@ -95,24 +95,24 @@ export default function SettingsPage() {
                         </div>
                     </SpotlightCard>
 
-                    <SpotlightCard className="p-12 space-y-12">
+                    <SpotlightCard className="p-8 lg:p-12 space-y-8 lg:space-y-12">
                         <div className="flex items-center gap-4">
                             <Shield className="w-5 h-5 text-purple-500" />
                             <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">{t('settings_infra_title')}</h3>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4 lg:space-y-6">
                             {[
                                 { label: 'Outscraper API v2', status: 'Operational', color: 'bg-green-500' },
                                 { label: 'Cloudinary CDN', status: 'Operational', color: 'bg-green-500' },
                                 { label: 'WhatsApp Bridge', status: 'Standby', color: 'bg-cyan-500' },
                                 { label: 'Vercel Deployment', status: 'Production', color: 'bg-purple-500' },
                             ].map((s, i) => (
-                                <div key={i} className="flex items-center justify-between p-6 rounded-2xl bg-white/[0.01] border border-white/5 hover:bg-white/[0.03] transition-all">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60">{s.label}</span>
+                                <div key={i} className="flex items-center justify-between p-4 lg:p-6 rounded-2xl bg-white/[0.01] border border-white/5 hover:bg-white/[0.03] transition-all">
+                                    <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-white/60">{s.label}</span>
                                     <div className="flex items-center gap-3">
                                         <div className={`w-1.5 h-1.5 rounded-full ${s.color} shadow-[0_0_8px_currentColor]`} />
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-white/20">{s.status}</span>
+                                        <span className="text-[8px] lg:text-[9px] font-black uppercase tracking-widest text-white/20">{s.status}</span>
                                     </div>
                                 </div>
                             ))}
@@ -120,34 +120,34 @@ export default function SettingsPage() {
                     </SpotlightCard>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    <SpotlightCard className="col-span-1 lg:col-span-3 p-12">
-                        <div className="flex flex-col lg:flex-row gap-16">
-                            <div className="lg:w-1/3 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+                    <SpotlightCard className="col-span-1 lg:col-span-3 p-8 lg:p-12">
+                        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
+                            <div className="lg:w-1/3 space-y-4 lg:space-y-6">
                                 <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">{t('settings_profile_title')}</h3>
                                 <p className="text-sm font-serif italic text-white/20 leading-relaxed">{t('settings_profile_desc')}</p>
                             </div>
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
                                 <div className="space-y-4">
                                     <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('settings_label_name')}</label>
-                                    <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-4">
+                                    <div className="p-5 lg:p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-4">
                                         <User className="w-4 h-4 text-white/20" />
                                         <span className="text-sm text-white/80 font-serif">{profile?.full_name || t('header_director')}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
                                     <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('settings_label_role')}</label>
-                                    <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-4">
+                                    <div className="p-5 lg:p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-4">
                                         <Mail className="w-4 h-4 text-white/20" />
                                         <span className="text-sm text-white/80 font-serif">{profile?.role || 'CEO & Founder'}</span>
                                     </div>
                                 </div>
-                                <div className="md:col-span-2 p-6 rounded-3xl bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-between">
-                                    <div className="space-y-1">
+                                <div className="md:col-span-2 p-6 lg:p-8 rounded-3xl bg-cyan-500/5 border border-cyan-500/10 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                    <div className="space-y-2 text-center sm:text-left">
                                         <p className="text-[9px] font-black text-cyan-500/40 uppercase tracking-widest">{t('settings_access_protocol')}</p>
-                                        <p className="text-xs text-white/80 font-serif">{t('settings_access_desc')}</p>
+                                        <p className="text-xs text-white/80 font-serif leading-relaxed">{t('settings_access_desc')}</p>
                                     </div>
-                                    <Sparkles className="w-6 h-6 text-cyan-500/20" />
+                                    <Sparkles className="w-6 h-6 text-cyan-500/20 shrink-0" />
                                 </div>
                             </div>
                         </div>

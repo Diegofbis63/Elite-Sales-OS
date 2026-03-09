@@ -60,7 +60,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
     };
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-1000">
+        <div className="space-y-8 lg:space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-500">
             <SectionHeader
                 icon={Users}
                 label={t('leads_title')}
@@ -70,7 +70,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                 rightElement={
                     <button
                         onClick={() => onEdit(null)}
-                        className="h-20 px-10 bg-white text-black text-[11px] font-black tracking-[0.3em] uppercase rounded-[2rem] flex items-center gap-4 hover:shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all whitespace-nowrap"
+                        className="w-full sm:w-auto h-16 sm:h-20 px-6 sm:px-10 bg-white text-black text-[10px] sm:text-[11px] font-black tracking-[0.2em] sm:tracking-[0.3em] uppercase rounded-2xl sm:rounded-[2rem] flex items-center justify-center gap-4 hover:shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all whitespace-nowrap"
                     >
                         <Plus className="w-5 h-5" /> {t('leads_new_btn')}
                     </button>
@@ -82,12 +82,12 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
-                                <tr className="border-b border-white/5 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] bg-white/[0.01]">
-                                    <th className="px-12 py-10 font-black">{t('leads_table_entity')}</th>
-                                    <th className="px-12 py-10 font-black">{t('leads_table_industry')}</th>
-                                    <th className="px-12 py-10 font-black">{t('leads_table_channel')}</th>
-                                    <th className="px-12 py-10 font-black">{t('leads_table_status')}</th>
-                                    <th className="px-12 py-10 text-right font-black">{t('leads_table_actions')}</th>
+                                <tr className="border-b border-white/5 text-white/20 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] bg-white/[0.01]">
+                                    <th className="px-6 sm:px-12 py-6 sm:py-10 font-black">{t('leads_table_entity')}</th>
+                                    <th className="px-6 sm:px-12 py-6 sm:py-10 font-black">{t('leads_table_industry')}</th>
+                                    <th className="px-6 sm:px-12 py-6 sm:py-10 font-black">{t('leads_table_channel')}</th>
+                                    <th className="px-6 sm:px-12 py-6 sm:py-10 font-black">{t('leads_table_status')}</th>
+                                    <th className="px-6 sm:px-12 py-6 sm:py-10 text-right font-black">{t('leads_table_actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -109,30 +109,30 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                 layout
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: i * 0.05 }}
+                                                transition={{ delay: i * 0.03 }}
                                                 className="border-b border-white/5 hover:bg-white/[0.03] transition-all group"
                                             >
-                                                <td className="px-12 py-10">
-                                                    <div className="text-[14px] font-serif tracking-widest text-white/90 group-hover:text-white transition-colors uppercase leading-normal font-light">{p.business_name || p.name}</div>
-                                                    <div className="text-[8px] text-white/10 mt-3 uppercase tracking-[0.4em] font-black">UID: {String(p.id).slice(0, 8)}</div>
+                                                <td className="px-6 sm:px-12 py-6 sm:py-10">
+                                                    <div className="text-[13px] sm:text-[14px] font-serif tracking-widest text-white/90 group-hover:text-white transition-colors uppercase leading-normal font-light">{p.business_name || p.name}</div>
+                                                    <div className="text-[7px] sm:text-[8px] text-white/10 mt-2 uppercase tracking-[0.4em] font-black">UID: {String(p.id).slice(0, 8)}</div>
                                                 </td>
-                                                <td className="px-12 py-10">
-                                                    <span className="text-[10px] text-white/40 font-light tracking-[0.3em] uppercase">/ {p.industry || t('leads_industry_general')}</span>
+                                                <td className="px-6 sm:px-12 py-6 sm:py-10">
+                                                    <span className="text-[9px] sm:text-[10px] text-white/40 font-light tracking-[0.3em] uppercase">/ {p.industry || t('leads_industry_general')}</span>
                                                 </td>
-                                                <td className="px-12 py-10">
-                                                    <div className="text-[12px] font-mono text-white/80 font-bold tracking-widest">{p.phone || t('leads_private')}</div>
-                                                    <div className={`mt-3 flex items-center gap-3 ${p.has_website ? 'text-green-500/30' : 'text-red-500/30'}`}>
+                                                <td className="px-6 sm:px-12 py-6 sm:py-10">
+                                                    <div className="text-[11px] sm:text-[12px] font-mono text-white/80 font-bold tracking-widest">{p.phone || t('leads_private')}</div>
+                                                    <div className={`mt-2 flex items-center gap-2 ${p.has_website ? 'text-green-500/30' : 'text-red-500/30'}`}>
                                                         <div className={`w-1 h-1 rounded-full ${p.has_website ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                                                        <span className="text-[8px] font-black uppercase tracking-[0.3em]">{p.has_website ? t('leads_web_infra') : t('leads_web_pending')}</span>
+                                                        <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.3em]">{p.has_website ? t('leads_web_infra') : t('leads_web_pending')}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-12 py-10">
+                                                <td className="px-6 sm:px-12 py-6 sm:py-10">
                                                     <div className="flex items-center gap-2">
-                                                        <div className={`w-2 h-2 rounded-full ${getStatusColor(p.status).split(' ')[0].replace('text-', 'bg-')}`} />
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(p.status).split(' ')[0].replace('text-', 'bg-')}`} />
                                                         <select
                                                             value={p.status || 'cold'}
                                                             onChange={(e) => handleStatusUpdate(p.id, e.target.value)}
-                                                            className="bg-transparent text-[10px] font-black uppercase tracking-[0.2em] text-white/60 outline-none cursor-pointer hover:text-white transition-all appearance-none"
+                                                            className="bg-transparent text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-white/60 outline-none cursor-pointer hover:text-white transition-all appearance-none"
                                                         >
                                                             <option value="cold" className="bg-[#0a0a0a]">{t('leads_status_cold')}</option>
                                                             <option value="contacted" className="bg-[#0a0a0a]">{t('leads_status_contacted')}</option>
@@ -142,8 +142,8 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                         </select>
                                                     </div>
                                                 </td>
-                                                <td className="px-12 py-10 text-right">
-                                                    <div className="flex items-center justify-end gap-3">
+                                                <td className="px-6 sm:px-12 py-6 sm:py-10 text-right">
+                                                    <div className="flex items-center justify-end gap-2 sm:gap-3">
                                                         <motion.button
                                                             initial={{ opacity: 0, scale: 0.8 }}
                                                             animate={{ opacity: 1, scale: 1 }}
@@ -194,7 +194,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                             animate={{ opacity: 1, scale: 1 }}
                                                             onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}
                                                             title={t('delete')}
-                                                            className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                                            className="p-2 sm:p-3 rounded-[0.5rem] sm:rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </motion.button>

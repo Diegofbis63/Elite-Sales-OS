@@ -37,12 +37,12 @@ export const ProfileModal = ({ isOpen, onClose, profile, onRefresh }: { isOpen: 
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-xl">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-[3rem] p-12 relative shadow-[0_50px_100px_rgba(0,0,0,0.5)]"
+                        className="w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 relative shadow-[0_50px_100px_rgba(0,0,0,0.5)]"
                     >
                         <button onClick={onClose} className="absolute top-8 right-8 p-3 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
                             <X className="w-5 h-5" />

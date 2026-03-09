@@ -34,7 +34,7 @@ export default function ProspectsPage() {
 
     return (
         <EliteLayout onSearch={setSearchQuery}>
-            <div className="max-w-[1400px] mx-auto px-8 py-16">
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 sm:py-16">
                 <ProspectsList
                     key={refreshTrigger}
                     searchQuery={searchQuery}
