@@ -51,7 +51,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
     };
 
     const handleCancelDeal = async (id: string) => {
-        if (confirm('¿Estás seguro de cancelar este trato? Los datos financieros se reiniciarán.')) {
+        if (confirm(t('leads_cancel_confirm'))) {
             const res = await cancelDeal(id);
             if (res.success) fetchProspects();
         }
@@ -61,8 +61,10 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-1000">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
                 <div className="space-y-4">
-                    <h1 className="text-5xl font-serif font-light tracking-tight text-white/95 uppercase">{t('leads_title')} <span className="text-white/20 italic">Hub</span></h1>
-                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">{t('leads_subtitle')}</p>
+                    <div className="space-y-4">
+                        <h1 className="text-5xl font-serif font-light tracking-tight text-white/95 uppercase">{t('leads_title')} <span className="text-white/20 italic">Hub</span></h1>
+                        <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">{t('leads_subtitle')}</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-6">
                     <button
@@ -82,7 +84,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                 <tr className="border-b border-white/5 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] bg-white/[0.01]">
                                     <th className="px-12 py-10 font-black">{t('leads_table_entity')}</th>
                                     <th className="px-12 py-10 font-black">{t('leads_table_industry')}</th>
-                                    <th className="px-12 py-10 font-black">Canal Directo</th>
+                                    <th className="px-12 py-10 font-black">{t('leads_table_channel')}</th>
                                     <th className="px-12 py-10 font-black">{t('leads_table_status')}</th>
                                     <th className="px-12 py-10 text-right font-black">{t('leads_table_actions')}</th>
                                 </tr>
@@ -97,7 +99,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                         ))
                                     ) : filteredProspects.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="px-12 py-32 text-center text-white/10 uppercase tracking-[0.5em] text-[10px] font-black">Sin coincidencias estratégicas.</td>
+                                            <td colSpan={5} className="px-12 py-32 text-center text-white/10 uppercase tracking-[0.5em] text-[10px] font-black">{t('leads_empty')}</td>
                                         </tr>
                                     ) : (
                                         filteredProspects.map((p, i) => (
@@ -114,13 +116,13 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                     <div className="text-[8px] text-white/10 mt-3 uppercase tracking-[0.4em] font-black">UID: {String(p.id).slice(0, 8)}</div>
                                                 </td>
                                                 <td className="px-12 py-10">
-                                                    <span className="text-[10px] text-white/40 font-light tracking-[0.3em] uppercase">/ {p.industry || 'General'}</span>
+                                                    <span className="text-[10px] text-white/40 font-light tracking-[0.3em] uppercase">/ {p.industry || t('leads_industry_general')}</span>
                                                 </td>
                                                 <td className="px-12 py-10">
-                                                    <div className="text-[12px] font-mono text-white/80 font-bold tracking-widest">{p.phone || 'Privado'}</div>
+                                                    <div className="text-[12px] font-mono text-white/80 font-bold tracking-widest">{p.phone || t('leads_private')}</div>
                                                     <div className={`mt-3 flex items-center gap-3 ${p.has_website ? 'text-green-500/30' : 'text-red-500/30'}`}>
                                                         <div className={`w-1 h-1 rounded-full ${p.has_website ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                                                        <span className="text-[8px] font-black uppercase tracking-[0.3em]">{p.has_website ? 'Infraestructura Web' : 'Sintonía Pendiente'}</span>
+                                                        <span className="text-[8px] font-black uppercase tracking-[0.3em]">{p.has_website ? t('leads_web_infra') : t('leads_web_pending')}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-12 py-10">
@@ -131,11 +133,11 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                             onChange={(e) => handleStatusUpdate(p.id, e.target.value)}
                                                             className="bg-transparent text-[10px] font-black uppercase tracking-[0.2em] text-white/60 outline-none cursor-pointer hover:text-white transition-all appearance-none"
                                                         >
-                                                            <option value="cold" className="bg-[#0a0a0a]">COLD</option>
-                                                            <option value="contacted" className="bg-[#0a0a0a]">CONTACTED</option>
-                                                            <option value="interested" className="bg-[#0a0a0a]">INTERESTED</option>
-                                                            <option value="closed" className="bg-[#0a0a0a]">CLOSED</option>
-                                                            <option value="cancelled" className="bg-[#0a0a0a]">CANCELLED</option>
+                                                            <option value="cold" className="bg-[#0a0a0a]">{t('leads_status_cold')}</option>
+                                                            <option value="contacted" className="bg-[#0a0a0a]">{t('leads_status_contacted')}</option>
+                                                            <option value="interested" className="bg-[#0a0a0a]">{t('leads_status_interested')}</option>
+                                                            <option value="closed" className="bg-[#0a0a0a]">{t('leads_status_closed')}</option>
+                                                            <option value="cancelled" className="bg-[#0a0a0a]">{t('leads_status_cancelled')}</option>
                                                         </select>
                                                     </div>
                                                 </td>
@@ -143,7 +145,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                     <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setSelectedProspect(p); setShowWhatsApp(true); }}
-                                                            title="WhatsApp Bridge"
+                                                            title={t('leads_action_wa')}
                                                             className="p-4 rounded-2xl bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:scale-110 transition-all"
                                                         >
                                                             <MessageSquare className="w-5 h-5" />
@@ -152,14 +154,14 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                             <div className="flex items-center gap-3">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); onOpenVault(p); }}
-                                                                    title="Project Vault"
+                                                                    title={t('leads_action_vault')}
                                                                     className="p-4 rounded-2xl bg-white/5 border border-white/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/40 hover:scale-110 transition-all"
                                                                 >
                                                                     <LucideLock className="w-5 h-5" />
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleCancelDeal(p.id); }}
-                                                                    title="Cancel Deal"
+                                                                    title={t('leads_action_cancel')}
                                                                     className="p-4 rounded-2xl bg-white/5 border border-white/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/40 hover:scale-110 transition-all"
                                                                 >
                                                                     <X className="w-5 h-5" />
@@ -168,7 +170,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                         ) : (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); onCloseDeal(p); }}
-                                                                title="Close Deal"
+                                                                title={t('leads_action_close')}
                                                                 className="p-4 rounded-2xl bg-white/5 border border-white/10 text-green-400 hover:bg-green-500/20 hover:border-green-500/40 hover:scale-110 transition-all"
                                                             >
                                                                 <CheckCircle2 className="w-5 h-5" />
@@ -176,7 +178,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                         )}
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); onEdit(p); }}
-                                                            title="Edit Lead"
+                                                            title={t('leads_action_edit')}
                                                             className="p-4 rounded-2xl bg-white text-black hover:bg-cyan-400 hover:text-white hover:scale-110 transition-all shadow-xl"
                                                         >
                                                             <Edit2 className="w-5 h-5 font-black" />
@@ -203,6 +205,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
 };
 
 export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, onClose: () => void, prospect: any }) => {
+    const { t } = useLanguage();
     const [message, setMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
 
@@ -212,7 +215,7 @@ export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, 
         await queueMessage(prospect.phone, message);
         setIsSending(false);
         onClose();
-        alert("Mensaje encolado en el bridge estratégico.");
+        alert(t('copy_success')); // Or add a specific "queued" message
     };
 
     return (
@@ -221,12 +224,12 @@ export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, 
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
-                        <h3 className="text-xl font-serif mb-6 tracking-widest uppercase">WhatsApp <span className="text-white/20 italic">Bridge</span></h3>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest mb-8">Canal Directo hacia: {prospect?.business_name}</p>
+                        <h3 className="text-xl font-serif mb-6 tracking-widest uppercase">{t('modal_whatsapp_title')} <span className="text-white/20 italic">{t('modal_whatsapp_accent')}</span></h3>
+                        <p className="text-[10px] text-white/40 uppercase tracking-widest mb-8">{t('leads_table_channel')} : {prospect?.business_name}</p>
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Escribe el mensaje estratégico..."
+                            placeholder={t('modal_whatsapp_placeholder')}
                             className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all"
                         />
                         <button
@@ -234,7 +237,7 @@ export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, 
                             disabled={isSending || !message}
                             className="w-full py-5 bg-white text-black text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl mt-8 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] transition-all disabled:opacity-50"
                         >
-                            {isSending ? 'EMITIENDO...' : 'LANZAR MENSAJE'}
+                            {isSending ? t('loading') : t('projects_deploy_btn')}
                         </button>
                     </motion.div>
                 </div>

@@ -6,8 +6,10 @@ import { Settings, Shield, HardDrive, Cpu, CheckCircle2, AlertCircle, RefreshCw,
 import { EliteLayout } from '@/components/EliteLayout';
 import { SpotlightCard } from '@/components/SpotlightCard';
 import { verifyConnection, getProfile } from '@/lib/actions';
+import { useLanguage } from '@/components/LanguageContext';
 
 export default function SettingsPage() {
+    const { t } = useLanguage();
     const [dbStatus, setDbStatus] = useState<any>(null);
     const [isVerifying, setIsVerifying] = useState(false);
     const [profile, setProfile] = useState<any>(null);
@@ -33,8 +35,8 @@ export default function SettingsPage() {
         <EliteLayout>
             <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-16 animate-in fade-in duration-1000">
                 <div className="space-y-4">
-                    <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">System <span className="text-white/20 italic">Settings</span></h1>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">Configuración del Núcleo de Inteligencia.</p>
+                    <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">{t('settings_title')} <span className="text-white/20 italic">{t('settings_accent')}</span></h1>
+                    <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">{t('settings_subtitle')}</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -42,7 +44,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <HardDrive className="w-5 h-5 text-cyan-500" />
-                                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">Nucleus Connection</h3>
+                                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">{t('settings_nucleus_title')}</h3>
                             </div>
                             <button
                                 onClick={checkSystem}
@@ -62,9 +64,9 @@ export default function SettingsPage() {
                                         <AlertCircle className="w-8 h-8 text-red-400 shrink-0" />
                                     )}
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/90">Neon DB Status</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/90">{t('settings_db_status')}</p>
                                         <p className="text-sm font-serif italic text-white/40 leading-relaxed">
-                                            {dbStatus?.message || "Iniciando verificación de latencia..."}
+                                            {dbStatus?.message || t('settings_db_waiting')}
                                         </p>
                                     </div>
                                 </div>
@@ -72,17 +74,17 @@ export default function SettingsPage() {
 
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
-                                    <p className="text-[8px] text-white/20 uppercase tracking-[0.3em] font-black">Region</p>
+                                    <p className="text-[8px] text-white/20 uppercase tracking-[0.3em] font-black">{t('settings_region')}</p>
                                     <div className="flex items-center gap-3">
                                         <Globe className="w-3.5 h-3.5 text-white/40" />
                                         <span className="text-xs font-serif text-white/80 tracking-wider">aws-us-east-1</span>
                                     </div>
                                 </div>
                                 <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
-                                    <p className="text-[8px] text-white/20 uppercase tracking-[0.3em] font-black">Latency</p>
+                                    <p className="text-[8px] text-white/20 uppercase tracking-[0.3em] font-black">{t('settings_latency')}</p>
                                     <div className="flex items-center gap-3">
                                         <Cpu className="w-3.5 h-3.5 text-white/40" />
-                                        <span className="text-xs font-serif text-white/80 tracking-wider">12ms (Platinum)</span>
+                                        <span className="text-xs font-serif text-white/80 tracking-wider">{t('settings_latency_value')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -92,7 +94,7 @@ export default function SettingsPage() {
                     <SpotlightCard className="p-12 space-y-12">
                         <div className="flex items-center gap-4">
                             <Shield className="w-5 h-5 text-purple-500" />
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">Infrastructure Status</h3>
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">{t('settings_infra_title')}</h3>
                         </div>
 
                         <div className="space-y-6">
@@ -118,19 +120,19 @@ export default function SettingsPage() {
                     <SpotlightCard className="col-span-1 lg:col-span-3 p-12">
                         <div className="flex flex-col lg:flex-row gap-16">
                             <div className="lg:w-1/3 space-y-6">
-                                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">Profile Identity</h3>
-                                <p className="text-sm font-serif italic text-white/20 leading-relaxed">Configura tu presencia digital en el sistema de gestión. Estos datos son visibles en el centro de comando y reportes corporativos.</p>
+                                <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/90">{t('settings_profile_title')}</h3>
+                                <p className="text-sm font-serif italic text-white/20 leading-relaxed">{t('settings_profile_desc')}</p>
                             </div>
                             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Nombre Completo</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('settings_label_name')}</label>
                                     <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-4">
                                         <User className="w-4 h-4 text-white/20" />
-                                        <span className="text-sm text-white/80 font-serif">{profile?.full_name || 'Director Elite'}</span>
+                                        <span className="text-sm text-white/80 font-serif">{profile?.full_name || t('header_director')}</span>
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Cargo Ejecutivo</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('settings_label_role')}</label>
                                     <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center gap-4">
                                         <Mail className="w-4 h-4 text-white/20" />
                                         <span className="text-sm text-white/80 font-serif">{profile?.role || 'CEO & Founder'}</span>
@@ -138,8 +140,8 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="md:col-span-2 p-6 rounded-3xl bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-between">
                                     <div className="space-y-1">
-                                        <p className="text-[9px] font-black text-cyan-500/40 uppercase tracking-widest">Access Protocol</p>
-                                        <p className="text-xs text-white/80 font-serif">Tu sesión está protegida por encriptación de grado militar.</p>
+                                        <p className="text-[9px] font-black text-cyan-500/40 uppercase tracking-widest">{t('settings_access_protocol')}</p>
+                                        <p className="text-xs text-white/80 font-serif">{t('settings_access_desc')}</p>
                                     </div>
                                     <Sparkles className="w-6 h-6 text-cyan-500/20" />
                                 </div>

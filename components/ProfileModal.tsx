@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Briefcase, Camera, Loader2 } from 'lucide-react';
 import { updateProfile } from '@/lib/actions';
+import { useLanguage } from './LanguageContext';
 
 export const ProfileModal = ({ isOpen, onClose, profile, onRefresh }: { isOpen: boolean, onClose: () => void, profile: any, onRefresh: () => void }) => {
+    const { t } = useLanguage();
     const [formData, setFormData] = useState({ full_name: profile?.full_name || '', role: profile?.role || '', photo_base64: profile?.photo_base64 || '' });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -48,8 +50,8 @@ export const ProfileModal = ({ isOpen, onClose, profile, onRefresh }: { isOpen: 
 
                         <div className="space-y-12">
                             <div className="text-center">
-                                <h3 className="text-3xl font-serif font-light tracking-tighter uppercase">Perfil de <span className="text-white/20 italic">Acceso</span></h3>
-                                <p className="text-[10px] text-white/30 tracking-[0.4em] font-black uppercase mt-2">Director del Protocolo Elite</p>
+                                <h3 className="text-3xl font-serif font-light tracking-tighter uppercase">{t('profile_title')} <span className="text-white/20 italic">{t('profile_accent')}</span></h3>
+                                <p className="text-[10px] text-white/30 tracking-[0.4em] font-black uppercase mt-2">{t('profile_subtitle')}</p>
                             </div>
 
                             <div className="flex justify-center">
@@ -73,7 +75,7 @@ export const ProfileModal = ({ isOpen, onClose, profile, onRefresh }: { isOpen: 
                             <div className="space-y-8">
                                 <div className="space-y-4">
                                     <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-4 flex items-center gap-2">
-                                        <User className="w-3 h-3" /> Nombre Completo
+                                        <User className="w-3 h-3" /> {t('profile_label_name')}
                                     </label>
                                     <input
                                         value={formData.full_name}
@@ -84,7 +86,7 @@ export const ProfileModal = ({ isOpen, onClose, profile, onRefresh }: { isOpen: 
 
                                 <div className="space-y-4">
                                     <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-4 flex items-center gap-2">
-                                        <Briefcase className="w-3 h-3" /> Cargo / Rango Elite
+                                        <Briefcase className="w-3 h-3" /> {t('profile_label_role')}
                                     </label>
                                     <input
                                         value={formData.role}
@@ -99,7 +101,7 @@ export const ProfileModal = ({ isOpen, onClose, profile, onRefresh }: { isOpen: 
                                 disabled={isSaving}
                                 className="w-full py-6 bg-white text-black text-[11px] font-black uppercase tracking-[0.5em] rounded-3xl hover:bg-neutral-100 transition-all shadow-[0_20px_40px_rgba(255,255,255,0.1)] flex items-center justify-center gap-4 disabled:opacity-50"
                             >
-                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sincronizar Identidad'}
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : t('profile_btn_sync')}
                             </button>
                         </div>
                     </motion.div>

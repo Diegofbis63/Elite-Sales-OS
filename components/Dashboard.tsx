@@ -8,40 +8,40 @@ import { syncProspects, importLeads } from '@/lib/actions';
 import { useLanguage } from './LanguageContext';
 
 const NICHE_OPTIONS = [
-    { label: 'Salud y Estética (Clínicas)', value: 'clinica OR estetica OR odontologia OR psicologo OR consultorio' },
-    { label: 'Fitness y Deportes (Gimnasios)', value: 'gimnasio OR crossfit OR pilates OR centro de entrenamiento' },
-    { label: 'Belleza y Cuidado (Salones)', value: 'peluqueria OR barberia OR salon de belleza OR centro de uñas' },
-    { label: 'Mascotas y Veterinaria', value: 'veterinaria OR clinica veterinaria OR peluqueria canina' },
-    { label: 'Servicios Profesionales', value: 'estudio juridico OR abogados OR estudio contable OR arquitectos' },
-    { label: 'Real Estate / Inmobiliarias', value: 'inmobiliaria OR bienes raices OR desarrollista' },
-    { label: 'Automotriz Premium', value: 'detailing automotriz OR taller mecanico' },
+    { labelKey: 'niche_health', value: 'clinica OR estetica OR odontologia OR psicologo OR consultorio' },
+    { labelKey: 'niche_fitness', value: 'gimnasio OR crossfit OR pilates OR centro de entrenamiento' },
+    { labelKey: 'niche_beauty', value: 'peluqueria OR barberia OR salon de belleza OR centro de uñas' },
+    { labelKey: 'niche_pets', value: 'veterinaria OR clinica veterinaria OR peluqueria canina' },
+    { labelKey: 'niche_pro', value: 'estudio juridico OR abogados OR estudio contable OR arquitectos' },
+    { labelKey: 'niche_realestate', value: 'inmobiliaria OR bienes raices OR desarrollista' },
+    { labelKey: 'niche_auto', value: 'detailing automotriz OR taller mecanico' },
 ];
 
 export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { stats: any, onRefresh: () => void, notifications: any[], onNavigate: (route: string) => void }) => {
     const { t } = useLanguage();
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedNiche, setSelectedNiche] = useState(NICHE_OPTIONS[0].value);
-    const [syncLog, setSyncLog] = useState<{ msg: string, type: 'info' | 'success' | 'error' | 'meta' }[]>([]);
+    const [syncLog, setSyncLog] = useState<{ msgKey?: string, msgStr?: string, type: 'info' | 'success' | 'error' | 'meta' }[]>([]);
 
     const handleSync = async () => {
         setIsSyncing(true);
-        const nicheLabel = NICHE_OPTIONS.find(n => n.value === selectedNiche)?.label || 'Nicho General';
-        setSyncLog([{ msg: `INICIANDO PROTOCOLO DETERMINISTA v5 [B2B EXPANSION]...`, type: 'meta' }]);
-        setSyncLog(prev => [...prev, { msg: `OBJETIVO: ${nicheLabel}`, type: 'meta' }]);
+        const nicheLabel = t(NICHE_OPTIONS.find(n => n.value === selectedNiche)?.labelKey || 'niche_health' as any);
+        setSyncLog([{ msgKey: 'dash_sync_start', type: 'meta' }]);
+        setSyncLog(prev => [...prev, { msgStr: `${t('dash_sync_objective')}: ${nicheLabel}`, type: 'meta' }]);
 
         try {
             const result = await syncProspects(selectedNiche) as any;
             if (result.success) {
                 setSyncLog(prev => [
                     ...prev,
-                    { msg: `EXTRACCIÓN COMPLETADA: ${result.leadsAdded} ENTIDADES FILTRADAS SIN WEB.`, type: 'success' }
+                    { msgStr: `${t('dash_sync_success')}: ${result.leadsAdded} ${t('dash_sync_entities')}`, type: 'success' }
                 ]);
             } else {
-                setSyncLog(prev => [...prev, { msg: `AVISO DE PROTOCOLO: ${result.error}`, type: 'error' }]);
+                setSyncLog(prev => [...prev, { msgStr: `${t('dash_sync_alert')}: ${result.error}`, type: 'error' }]);
             }
             onRefresh();
         } catch (err) {
-            setSyncLog(prev => [...prev, { msg: `EXCEPCIÓN CRÍTICA: ${err}`, type: 'error' }]);
+            setSyncLog(prev => [...prev, { msgStr: `${t('dash_sync_error')}: ${err}`, type: 'error' }]);
         } finally {
             setIsSyncing(false);
         }
@@ -68,7 +68,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                         className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white/80 focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer appearance-none min-w-[300px]"
                     >
                         {NICHE_OPTIONS.map((n, i) => (
-                            <option key={i} value={n.value} className="bg-[#0a0a0a] text-white">{n.label}</option>
+                            <option key={i} value={n.value} className="bg-[#0a0a0a] text-white">{t(n.labelKey as any)}</option>
                         ))}
                     </select>
                     <button
@@ -121,7 +121,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                             {syncLog.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center opacity-20 py-20">
                                     <Sparkles className="w-12 h-12 mb-6" />
-                                    <p className="tracking-[0.3em] font-black uppercase text-[10px]">Esperando Inicialización de Sincro...</p>
+                                    <p className="tracking-[0.3em] font-black uppercase text-[10px]">{t('dash_waiting_sync')}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -129,14 +129,14 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                                         <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex gap-4">
                                             <span className="text-white/10 shrink-0 select-none">[{i + 1}]</span>
                                             <span className={log.type === 'success' ? 'text-cyan-400' : log.type === 'error' ? 'text-red-400' : log.type === 'meta' ? 'text-purple-400 font-bold' : 'text-white/50'}>
-                                                {log.msg}
+                                                {log.msgKey ? t(log.msgKey as any) : log.msgStr}
                                             </span>
                                         </motion.div>
                                     ))}
                                     {isSyncing && (
                                         <div className="flex items-center gap-4 text-cyan-500/60 animate-pulse">
                                             <span className="text-white/10 shrink-0">[*]</span>
-                                            <span>TRABAJANDO EN LA RED...</span>
+                                            <span>{t('dash_syncing_network')}</span>
                                             <Loader2 className="w-3 h-3 animate-spin" />
                                         </div>
                                     )}
@@ -146,12 +146,12 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
 
                         <div className="mt-8 grid grid-cols-2 gap-6">
                             <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-                                <p className="text-[8px] text-white/20 uppercase tracking-widest font-black mb-2">Objetivo Geográfico</p>
-                                <p className="text-[11px] text-white/60 font-serif italic tracking-wider">Córdoba Capital, Argentina</p>
+                                <p className="text-[8px] text-white/20 uppercase tracking-widest font-black mb-2">{t('dash_geo_target')}</p>
+                                <p className="text-[11px] text-white/60 font-serif italic tracking-wider">{t('dash_geo_value')}</p>
                             </div>
                             <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-                                <p className="text-[8px] text-white/20 uppercase tracking-widest font-black mb-2">Capacidad Mensual</p>
-                                <p className="text-[11px] text-white/60 font-serif italic tracking-wider">∞ Resultados (Deterministic)</p>
+                                <p className="text-[8px] text-white/20 uppercase tracking-widest font-black mb-2">{t('dash_capacity')}</p>
+                                <p className="text-[11px] text-white/60 font-serif italic tracking-wider">{t('dash_capacity_value')}</p>
                             </div>
                         </div>
                     </SpotlightCard>
@@ -168,7 +168,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                             {notifications.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
                                     <CheckCircle2 className="w-12 h-12 mb-6" />
-                                    <p className="tracking-[0.3em] font-black uppercase text-[10px]">Cero alertas pendientes.<br />Protocolo estable.</p>
+                                    <p className="tracking-[0.3em] font-black uppercase text-[10px]">{t('dash_no_alerts')}</p>
                                 </div>
                             ) : (
                                 notifications.map((n, i) => (
@@ -176,8 +176,12 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                                         <div className="flex gap-4">
                                             <div className={`mt-1 shrink-0 w-1.5 h-1.5 rounded-full ${n.type === 'billing' ? 'bg-green-500' : 'bg-cyan-500'} shadow-[0_0_8px_currentColor]`} />
                                             <div className="space-y-2 text-left">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/90">{n.title}</p>
-                                                <p className="text-[11px] font-serif italic text-white/40 leading-relaxed">{n.msg}</p>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                                                    {n.type === 'billing' ? t('notif_billing') : t('notif_security')}
+                                                </p>
+                                                <p className="text-[11px] font-serif italic text-white/40 leading-relaxed">
+                                                    {n.type === 'billing' ? t('notif_billing_msg') : t('notif_security_msg')}
+                                                </p>
                                             </div>
                                         </div>
                                     </motion.div>
