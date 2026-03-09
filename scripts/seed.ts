@@ -12,24 +12,20 @@ async function main() {
     console.log('Seeding initial data...');
 
     await db.insert(schema.prospects).values([
-        { name: 'Clínica del Sol', contact: 'Dr. Roberto Gómez', status: 'Interesado', lastContact: 'Hoy, 10:30 AM' },
-        { name: 'Estética Nueva Córdoba', contact: 'Lic. María Paz', status: 'Contactado', lastContact: 'Ayer, 16:45 PM' },
-        { name: 'Sanatorio Allende', contact: 'Ing. Carlos Ruiz', status: 'Frío', lastContact: 'Hace 3 días' },
-        { name: 'Consultorios Cerro', contact: 'Dra. Ana López', status: 'Cerrado', lastContact: 'Hace 1 semana' },
+        { name: 'Dr. Roberto Gómez', business_name: 'Clínica del Sol', status: 'interested', industry: 'Salud' },
+        { name: 'Lic. María Paz', business_name: 'Estética Nueva Córdoba', status: 'contacted', industry: 'Estética' },
+        { name: 'Ing. Carlos Ruiz', business_name: 'Sanatorio Allende', status: 'cold', industry: 'Salud' },
+        { name: 'Dra. Ana López', business_name: 'Consultorios Cerro', status: 'closed', industry: 'Salud' },
     ]);
 
-    await db.insert(schema.templates).values([
+    await db.insert(schema.message_templates).values([
         {
             title: 'Abridor Clínicas',
-            state: 'Frío',
             content: 'Hola {nombre}, ¿cómo estás? Vi que están haciendo un excelente trabajo en {negocio}. Quería consultarte si actualmente están tomando nuevos pacientes o si tienen la agenda llena.',
-            variables: ['{nombre}', '{negocio}']
         },
         {
             title: 'Seguimiento Valor (Día 3)',
-            state: 'Contactado',
             content: 'Hola {nombre}, te escribo cortito para no robarte tiempo. ¿Pudiste ver el mensaje anterior sobre cómo podemos escalar las consultas en {negocio}?',
-            variables: ['{nombre}', '{negocio}']
         },
     ]);
 

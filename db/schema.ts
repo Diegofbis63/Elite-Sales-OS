@@ -11,8 +11,30 @@ export const prospects = pgTable('prospects', {
     has_website: boolean('has_website').default(false),
     maps_id: text('maps_id').unique(),
     status: text('status').default('cold').$type<'cold' | 'contacted' | 'interested' | 'closed'>(),
+
+    // Finanzas ERP
+    total_price: numeric('total_price').default('0'),
+    installments: integer('installments').default(1),
+    monthly_maintenance: numeric('monthly_maintenance').default('0'),
+
+    // Control de Cobros
+    last_payment_date: timestamp('last_payment_date'),
+    next_payment_due: timestamp('next_payment_due'),
+
+    // Bóveda del Proyecto (JSONB)
+    // Estructura: { website_url, admin_user, admin_password, database_hosting, domain_name, domain_renewal_date }
+    project_details: jsonb('project_details').default({}),
+
     last_interaction: timestamp('last_interaction'),
     createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const user_profile = pgTable('user_profile', {
+    id: integer('id').primaryKey().default(1), // Único perfil por ahora
+    full_name: text('full_name').default('Director Elite'),
+    role: text('role').default('CEO & Founder'),
+    photo_base64: text('photo_base64'),
+    updated_at: timestamp('updated_at').defaultNow(),
 });
 
 export const outbox = pgTable('outbox', {

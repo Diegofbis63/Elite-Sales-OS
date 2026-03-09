@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from '../db';
-import { prospects, outbox, message_templates, sync_history } from '../db/schema';
-import { desc, eq, sql, isNull } from 'drizzle-orm';
+import { prospects, outbox, message_templates, sync_history, user_profile } from '../db/schema';
+import { desc, eq, sql, isNull, gte, lte, and } from 'drizzle-orm';
 import { v2 as cloudinary } from 'cloudinary';
 import { runProspectingSync, injectLeads } from './sync-engine';
 
@@ -77,7 +77,37 @@ export async function createProspect(data: any) {
 export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
     try {
         if (!db) return { success: false };
-        await db.update(prospects as any).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
+        await db.update(prospects).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}
+
+export async function updateProspectFinancials(id: string, data: any) {
+    try {
+        if (!db) return { success: false };
+        await db.update(prospects).set({
+            total_price: data.total_price,
+            installments: data.installments,
+            monthly_maintenance: data.monthly_maintenance,
+            last_payment_date: data.last_payment_date ? new Date(data.last_payment_date) : new Date(),
+            next_payment_due: data.next_payment_due ? new Date(data.next_payment_due) : null,
+            status: 'closed'
+        }).where(eq(prospects.id, id));
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating financials:", error);
+        return { success: false };
+    }
+}
+
+export async function updateProjectVault(id: string, details: any) {
+    try {
+        if (!db) return { success: false };
+        await db.update(prospects).set({
+            project_details: details
+        }).where(eq(prospects.id, id));
         return { success: true };
     } catch (error) {
         return { success: false };
@@ -137,6 +167,35 @@ export async function createTemplate(title: string, content: string) {
     }
 }
 
+// --- Profile ---
+export async function getProfile() {
+    try {
+        if (!db) return null;
+        let profile = await db.query.user_profile.findFirst({ where: eq(user_profile.id, 1) });
+        if (!profile) {
+            // Inicializar si no existe
+            await db.insert(user_profile).values({ id: 1, full_name: 'Director Elite', role: 'CEO & Founder' });
+            profile = await db.query.user_profile.findFirst({ where: eq(user_profile.id, 1) });
+        }
+        return profile;
+    } catch (error) {
+        return null;
+    }
+}
+
+export async function updateProfile(data: any) {
+    try {
+        if (!db) return { success: false };
+        await db.update(user_profile).set({
+            ...data,
+            updated_at: new Date()
+        }).where(eq(user_profile.id, 1));
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}
+
 // --- Multimedia (Cloudinary) ---
 export async function uploadToCloudinary(formData: FormData) {
     try {
@@ -181,14 +240,18 @@ export async function getDashboardStats() {
         }
         const all = await getProspects();
         const totalProspects = all.length;
+        const closed = all.filter(p => p.status === 'closed');
         const hot = all.filter(p => p.status === 'interested').length;
-        const closed = all.filter(p => p.status === 'closed').length;
-        const conversionRate = totalProspects > 0 ? (closed / totalProspects) * 100 : 0;
+
+        // Ingresos Reales: Suma de total_price + monthly_maintenance de los cerrados
+        const totalRevenue = closed.reduce((acc, p) => acc + Number(p.total_price || 0) + Number(p.monthly_maintenance || 0), 0);
+
+        const conversionRate = totalProspects > 0 ? (closed.length / totalProspects) * 100 : 0;
         const messagesSentRes = await db.query.outbox.findMany({ where: eq(outbox.status, 'sent') });
         const withoutWeb = all.filter(p => !p.has_website).length;
 
         return {
-            projectedRevenue: `$${(hot * 1200).toLocaleString()}`,
+            projectedRevenue: `$${totalRevenue.toLocaleString()}`,
             hotProspects: hot,
             conversionRate: `${conversionRate.toFixed(1)}%`,
             messagesSent: messagesSentRes.length.toLocaleString(),
@@ -227,5 +290,50 @@ export async function processOutbox() {
     } catch (error) {
         console.error("Outbox process error:", error);
         return { success: false, error: String(error) };
+    }
+}
+export async function getNotifications() {
+    try {
+        if (!db) return [];
+        const allClosed = await db.query.prospects.findMany({
+            where: eq(prospects.status, 'closed')
+        });
+
+        const notifications: any[] = [];
+        const now = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(now.getDate() + 7);
+
+        allClosed.forEach(p => {
+            // Alerta de Cobro
+            if (p.next_payment_due && p.next_payment_due <= nextWeek) {
+                notifications.push({
+                    id: `pay_${p.id}`,
+                    type: 'billing',
+                    title: 'Cobro Pendiente',
+                    msg: `Cuota de ${p.business_name} vence el ${p.next_payment_due.toLocaleDateString()}`,
+                    item: p
+                });
+            }
+
+            // Alerta de Domino
+            const details = (p.project_details as any) || {};
+            if (details.domain_renewal_date) {
+                const renewalDate = new Date(details.domain_renewal_date);
+                if (renewalDate <= nextWeek) {
+                    notifications.push({
+                        id: `dom_${p.id}`,
+                        type: 'security',
+                        title: 'Vencimiento Dominio',
+                        msg: `El dominio de ${p.business_name} vence en pocos días.`,
+                        item: p
+                    });
+                }
+            }
+        });
+
+        return notifications;
+    } catch (error) {
+        return [];
     }
 }

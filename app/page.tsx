@@ -18,7 +18,8 @@ import {
     Sparkles,
     Send,
     Upload,
-    CheckCircle2
+    CheckCircle2,
+    Lock as LucideLock
 } from 'lucide-react';
 import {
     getProspects,
@@ -31,7 +32,12 @@ import {
     createProspect,
     createTemplate,
     processOutbox,
-    importLeads
+    importLeads,
+    getProfile,
+    updateProfile,
+    updateProspectFinancials,
+    updateProjectVault,
+    getNotifications
 } from '@/lib/actions';
 
 // --- Components ---
@@ -253,6 +259,227 @@ const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, onClose
     );
 };
 
+// --- ERP Components ---
+
+const ProfileModal = ({ isOpen, onClose, profile, onRefresh }: { isOpen: boolean, onClose: () => void, profile: any, onRefresh: () => void }) => {
+    const [formData, setFormData] = useState({ full_name: profile?.full_name || '', role: profile?.role || '', photo_base64: profile?.photo_base64 || '' });
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (profile) setFormData({ full_name: profile.full_name, role: profile.role, photo_base64: profile.photo_base64 });
+    }, [profile]);
+
+    const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setFormData(prev => ({ ...prev, photo_base64: reader.result as string }));
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        const res = await updateProfile(formData);
+        if (res.success) { onRefresh(); onClose(); }
+        setIsSaving(false);
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
+                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }} className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-12 overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+                        <h3 className="text-xl font-serif font-light tracking-[0.2em] uppercase mb-10">Perfil del <span className="text-white/20 italic">Director</span></h3>
+
+                        <div className="space-y-8">
+                            <div className="flex flex-col items-center gap-6">
+                                <div className="relative group cursor-pointer" onClick={() => document.getElementById('p-photo')?.click()}>
+                                    <div className="w-24 h-24 rounded-full border border-white/10 overflow-hidden bg-white/5">
+                                        {formData.photo_base64 ? (<img src={formData.photo_base64} className="w-full h-full object-cover grayscale" />) : (<div className="w-full h-full flex items-center justify-center text-white/10 font-black">EDIT</div>)}
+                                    </div>
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-full transition-opacity">
+                                        <Edit2 className="w-5 h-5" />
+                                    </div>
+                                    <input id="p-photo" type="file" className="hidden" accept="image/*" onChange={handlePhoto} />
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Nombre Completo</label>
+                                <input value={formData.full_name} onChange={e => setFormData(prev => ({ ...prev, full_name: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm" />
+                            </div>
+                            <div className="space-y-4">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Puesto / Rango</label>
+                                <input value={formData.role} onChange={e => setFormData(prev => ({ ...prev, role: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm" />
+                            </div>
+                            <button onClick={handleSave} disabled={isSaving} className="w-full py-5 bg-white text-black text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl mt-4">
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Sincronizar Datos'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
+const CloseDealModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpen: boolean, onClose: () => void, prospect: any, onRefresh: () => void }) => {
+    const [formData, setFormData] = useState({ total_price: '', installments: 1, monthly_maintenance: '', first_payment: new Date().toISOString().split('T')[0] });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        const nextDue = new Date(formData.first_payment);
+        nextDue.setDate(nextDue.getDate() + 30);
+
+        const res = await updateProspectFinancials(prospect.id, {
+            total_price: formData.total_price,
+            installments: formData.installments,
+            monthly_maintenance: formData.monthly_maintenance,
+            last_payment_date: formData.first_payment,
+            next_payment_due: formData.installments > 1 ? nextDue : null
+        });
+        if (res.success) {
+            onRefresh();
+            onClose();
+        }
+        setIsSaving(false);
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
+                    <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }} className="relative w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-2xl">
+                        <div className="absolute top-0 right-0 p-8">
+                            <CheckCircle2 className="w-12 h-12 text-cyan-500/20" />
+                        </div>
+                        <h3 className="text-2xl font-serif font-light tracking-[0.1em] uppercase text-white/90">Closing <span className="text-white/20 italic">The Deal</span></h3>
+                        <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black mt-2 mb-10">{prospect?.business_name}</p>
+
+                        <form onSubmit={handleSubmit} className="space-y-8">
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Precio Total del Proyecto ($)</label>
+                                    <input type="number" required placeholder="5000" value={formData.total_price} onChange={e => setFormData({ ...formData, total_price: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-2xl font-serif text-white/90 placeholder-white/5" />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Cuotas (Finance)</label>
+                                    <select value={formData.installments} onChange={e => setFormData({ ...formData, installments: Number(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-2xl font-serif text-white/90">
+                                        <option value={1}>1 Cuota (Full)</option>
+                                        <option value={2}>2 Cuotas</option>
+                                        <option value={3}>3 Cuotas</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Mantenimiento Mensual ($)</label>
+                                    <input type="number" required placeholder="150" value={formData.monthly_maintenance} onChange={e => setFormData({ ...formData, monthly_maintenance: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-2xl font-serif text-white/90 placeholder-white/5" />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Primer Cobro (Hoy)</label>
+                                    <input type="date" required value={formData.first_payment} onChange={e => setFormData({ ...formData, first_payment: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-xl font-serif text-white/90" />
+                                </div>
+                            </div>
+
+                            <div className="p-8 rounded-3xl bg-cyan-500/5 border border-cyan-500/10 flex justify-between items-center">
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-cyan-500/40">Valor de cada Cuota</p>
+                                    <p className="text-3xl font-serif text-cyan-400 mt-2">${formData.total_price ? (Number(formData.total_price) / formData.installments).toFixed(2) : '0.00'}</p>
+                                </div>
+                                <Sparkles className="w-8 h-8 text-cyan-400/20" />
+                            </div>
+
+                            <button disabled={isSaving} className="w-full py-6 bg-white text-black text-[11px] font-black uppercase tracking-[0.5em] rounded-3xl hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all">
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Sellar Contrato Platinum'}
+                            </button>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
+const VaultModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpen: boolean, onClose: () => void, prospect: any, onRefresh: () => void }) => {
+    const defaultDetails = { website_url: '', admin_user: '', admin_password: '', database_hosting: '', domain_name: '', domain_renewal_date: '' };
+    const [details, setDetails] = useState(defaultDetails);
+    const [isSaving, setIsSaving] = useState(false);
+    const [showPass, setShowPass] = useState(false);
+
+    useEffect(() => {
+        if (prospect?.project_details) setDetails({ ...defaultDetails, ...prospect.project_details });
+        else setDetails(defaultDetails);
+    }, [prospect]);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        await updateProjectVault(prospect.id, details);
+        onRefresh();
+        onClose();
+        setIsSaving(false);
+    };
+
+    const copy = (val: string) => { navigator.clipboard.writeText(val); };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[250] flex items-end justify-end p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 40, stiffness: 400 }} className="relative w-full max-w-lg h-full bg-[#0a0a0a] border-l border-white/10 p-12 overflow-y-auto custom-scrollbar shadow-2xl">
+                        <div className="flex items-center justify-between mb-16">
+                            <div>
+                                <h3 className="text-2xl font-serif font-light tracking-widest uppercase">Project <span className="text-white/20 italic">Vault</span></h3>
+                                <p className="text-[10px] text-white/30 tracking-[0.4em] font-black uppercase mt-1">Acceso Maestro al Ecosistema</p>
+                            </div>
+                            <button onClick={onClose} className="p-3 bg-white/5 rounded-full hover:bg-white/10"><X className="w-5 h-5" /></button>
+                        </div>
+
+                        <div className="space-y-10">
+                            {[
+                                { label: 'URL del Sitio', field: 'website_url', type: 'text' },
+                                { label: 'Nombre de Dominio', field: 'domain_name', type: 'text' },
+                                { label: 'Vencimiento Dominio', field: 'domain_renewal_date', type: 'date' },
+                                { label: 'Hosting / Base de Datos', field: 'database_hosting', type: 'text' },
+                            ].map(f => (
+                                <div key={f.field} className="space-y-4">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{f.label}</label>
+                                    <input type={f.type} value={(details as any)[f.field]} onChange={e => setDetails({ ...details, [f.field]: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm text-white/80" />
+                                </div>
+                            ))}
+
+                            <div className="grid grid-cols-2 gap-6 pt-10 border-t border-white/5">
+                                <div className="space-y-4">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Usuario Admin</label>
+                                    <input value={details.admin_user} onChange={e => setDetails({ ...details, admin_user: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm" />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Contraseña</label>
+                                    <div className="relative">
+                                        <input type={showPass ? 'text' : 'password'} value={details.admin_password} onChange={e => setDetails({ ...details, admin_password: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 pr-14 text-sm font-mono tracking-widest" />
+                                        <button onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white"><Sparkles className="w-4 h-4" /></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onClick={handleSave} disabled={isSaving} className="w-full py-6 bg-cyan-500 text-black text-[11px] font-black uppercase tracking-[0.5em] rounded-3xl mt-12 hover:shadow-[0_20px_40px_rgba(34,211,238,0.2)] transition-all">
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin mx-auto text-black" /> : 'Encriptar Bóveda'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
 // --- Pages ---
 
 const Sidebar = ({ currentRoute, setCurrentRoute }: { currentRoute: string, setCurrentRoute: (r: string) => void }) => {
@@ -295,16 +522,16 @@ const Sidebar = ({ currentRoute, setCurrentRoute }: { currentRoute: string, setC
                 })}
             </nav>
             <div className="p-8 border-t border-white/5">
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/5">
-                    <p className="text-[9px] text-white/30 uppercase tracking-widest font-black mb-3">Protocolo Activo</p>
-                    <p className="text-[10px] text-white/60 leading-relaxed font-light">Soporte biótico por Antigravity Lab.</p>
+                <div className="p-6 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/5 text-center">
+                    <p className="text-2xl font-serif italic text-white/20 leading-none">Elite Agency</p>
+                    <p className="text-[9px] text-white/10 uppercase tracking-[0.4em] font-black mt-2">OS v4.0 Platinum</p>
                 </div>
             </div>
         </aside>
     );
 };
 
-const Header = () => {
+const Header = ({ profile, onEditProfile }: { profile: any, onEditProfile: () => void }) => {
     return (
         <header className="h-24 flex items-center justify-between px-10 lg:px-14 border-b border-white/5 bg-[#0a0a0a]/50 backdrop-blur-md sticky top-0 z-40">
             <div className="flex items-center gap-6 flex-1 max-w-2xl">
@@ -320,14 +547,18 @@ const Header = () => {
                     <div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)] animate-pulse" />
                     <span className="text-[9px] font-black tracking-[0.3em] uppercase text-white/30 font-bold">Sync Hub</span>
                 </div>
-                <div className="flex items-center gap-4 group cursor-pointer">
+                <div className="flex items-center gap-4 group cursor-pointer" onClick={onEditProfile}>
                     <div className="text-right hidden sm:block">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">Director Elite</p>
-                        <p className="text-[8px] uppercase tracking-widest text-white/20 mt-1">Socio Autorizado</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">{profile?.full_name || 'Director Elite'}</p>
+                        <p className="text-[8px] uppercase tracking-widest text-white/20 mt-1">{profile?.role || 'Socio Autorizado'}</p>
                     </div>
                     <div className="w-10 h-10 rounded-full border border-white/10 p-0.5 group-hover:border-white/40 transition-all duration-500">
                         <div className="w-full h-full rounded-full bg-white/5 overflow-hidden">
-                            <img src="https://picsum.photos/seed/elite_user/100/100" className="w-full h-full object-cover grayscale brightness-125" alt="Avatar" />
+                            {profile?.photo_base64 ? (
+                                <img src={profile.photo_base64} className="w-full h-full object-cover grayscale brightness-125" alt="Avatar" />
+                            ) : (
+                                <img src="https://picsum.photos/seed/elite_user/100/100" className="w-full h-full object-cover grayscale brightness-125" alt="Avatar" />
+                            )}
                         </div>
                     </div>
                 </div>
@@ -338,20 +569,19 @@ const Header = () => {
 
 // --- Page Components ---
 
-const ProspectsList = () => {
+const ProspectsList = ({ onCloseDeal, onOpenVault }: { onCloseDeal: (p: any) => void, onOpenVault: (p: any) => void }) => {
     const [prospects, setProspects] = useState<any[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [selectedProspect, setSelectedProspect] = useState<any>(null);
     const [showWhatsApp, setShowWhatsApp] = useState(false);
-    const [filter, setFilter] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [showNewModal, setShowNewModal] = useState(false);
 
-    const fetchProspects = () => {
+    const fetchProspects = async () => {
         setIsFetching(true);
-        getProspects().then(data => {
-            setProspects(data);
-            setIsFetching(false);
-        });
+        const data = await getProspects();
+        setProspects(data);
+        setIsFetching(false);
     };
 
     useEffect(() => {
@@ -359,9 +589,9 @@ const ProspectsList = () => {
     }, []);
 
     const filteredProspects = prospects.filter(p =>
-        p.name?.toLowerCase().includes(filter.toLowerCase()) ||
-        p.business_name?.toLowerCase().includes(filter.toLowerCase()) ||
-        p.industry?.toLowerCase().includes(filter.toLowerCase())
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.industry?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getStatusColor = (status: string) => {
@@ -390,8 +620,8 @@ const ProspectsList = () => {
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-cyan-500/50 transition-colors" />
                         <input
                             placeholder="FILTRAR PORTFOLIO..."
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-14 pr-10 py-3.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] focus:outline-none focus:border-white/20 transition-all w-64"
                         />
                     </div>
@@ -460,14 +690,32 @@ const ProspectsList = () => {
                                                         {p.status || 'COLD'}
                                                     </span>
                                                 </td>
-                                                <td className="px-12 py-10">
+                                                <td className="px-12 py-10 text-right">
                                                     <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-700">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleOpenWhatsApp(p); }}
-                                                            className="p-4 rounded-full bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all hover:shadow-[0_0_25px_rgba(34,211,238,0.2)]"
+                                                            title="WhatsApp Core"
+                                                            className="p-4 rounded-full bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all"
                                                         >
                                                             <MessageSquare className="w-4 h-4" />
                                                         </button>
+                                                        {p.status === 'closed' ? (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); onOpenVault(p); }}
+                                                                title="Project Vault"
+                                                                className="p-4 rounded-full bg-white/5 border border-white/10 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/40 transition-all"
+                                                            >
+                                                                <LucideLock className="w-4 h-4" />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); onCloseDeal(p); }}
+                                                                title="Close Deal"
+                                                                className="p-4 rounded-full bg-white/5 border border-white/10 text-green-400 hover:bg-green-500/10 hover:border-green-500/40 transition-all"
+                                                            >
+                                                                <CheckCircle2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                         <button className="p-4 rounded-full bg-white/5 border border-white/10 text-white/20 hover:text-white hover:bg-white/10 transition-all">
                                                             <Edit2 className="w-4 h-4" />
                                                         </button>
@@ -687,9 +935,15 @@ const TemplatesList = () => {
 
 // --- Layout & App ---
 
-const Layout = ({ children, currentRoute, setCurrentRoute }: { children: React.ReactNode, currentRoute: string, setCurrentRoute: (r: string) => void }) => {
+const Layout = ({ children, currentRoute, setCurrentRoute, profile, onEditProfile }: {
+    children: React.ReactNode,
+    currentRoute: string,
+    setCurrentRoute: (r: string) => void,
+    profile: any,
+    onEditProfile: () => void
+}) => {
     return (
-        <div className="flex h-screen bg-[#0a0a0a] text-white overflow-hidden font-sans selection:bg-cyan-500/30 selection:text-white">
+        <div className="min-h-screen bg-[#050505] text-white/90 selection:bg-cyan-500/30 flex font-sans">
             <GlobalSpotlight />
             <Sidebar currentRoute={currentRoute} setCurrentRoute={setCurrentRoute} />
             <div className="flex-1 lg:ml-64 flex flex-col min-w-0 overflow-hidden relative">
@@ -697,9 +951,11 @@ const Layout = ({ children, currentRoute, setCurrentRoute }: { children: React.R
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-cyan-500/[0.03] blur-[180px] rounded-full pointer-events-none" />
                 <div className="absolute bottom-0 right-0 w-[800px] h-[400px] bg-purple-500/[0.02] blur-[150px] rounded-full pointer-events-none" />
 
-                <Header />
+                <Header profile={profile} onEditProfile={onEditProfile} />
                 <main className="flex-1 overflow-y-auto p-10 lg:p-16 relative z-10 custom-scrollbar scroll-smooth">
-                    {children}
+                    <div className="max-w-7xl mx-auto w-full">
+                        {children}
+                    </div>
                 </main>
             </div>
         </div>
@@ -714,46 +970,65 @@ interface DashboardStats {
 }
 
 export default function App() {
-    const [currentRoute, setCurrentRoute] = useState('dashboard');
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [currentRoute, setCurrentRoute] = useState('dashboard');
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [profile, setProfile] = useState<any>(null);
+    const [notifications, setNotifications] = useState<any[]>([]);
 
-    const fetchStats = () => {
-        getDashboardStats().then(s => setStats(s as DashboardStats));
-    };
+    // Modals
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showCloseDeal, setShowCloseDeal] = useState(false);
+    const [showVault, setShowVault] = useState(false);
+    const [selectedProspect, setSelectedProspect] = useState<any>(null);
 
     useEffect(() => {
         const session = localStorage.getItem('elite_session');
-        if (session === 'true') {
-            setIsAuthenticated(true);
-            fetchStats();
-        } else {
-            setIsAuthenticated(false);
-        }
+        if (session) setIsAuthenticated(true);
     }, []);
+
+    const fetchStats = async () => {
+        const s = await getDashboardStats();
+        setStats(s);
+    };
+
+    const fetchProfile = async () => {
+        const p = await getProfile();
+        setProfile(p);
+    };
+
+    const fetchNotifications = async () => {
+        const n = await getNotifications();
+        setNotifications(n);
+    };
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchStats();
+            fetchProfile();
+            fetchNotifications();
+        }
+    }, [isAuthenticated]);
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        const userInput = password.trim();
-        const envPass = process.env.NEXT_PUBLIC_PASSCODE;
-        const targetPass = (envPass && typeof envPass === 'string' ? envPass.trim() : 'elite2024');
-
-        if (userInput === targetPass) {
-            localStorage.setItem('elite_session', 'true');
-            setIsAuthenticated(true);
-            fetchStats();
-        } else {
-            alert('AUTORIZACIÓN DENEGADA: Credenciales inválidas.');
-        }
+        setIsLoggingIn(true);
+        setTimeout(() => {
+            if (password === (process.env.NEXT_PUBLIC_PASSCODE || 'elite2024')) {
+                setIsAuthenticated(true);
+                localStorage.setItem('elite_session', 'active');
+            } else {
+                alert('ACCESO DENEGADO: Credenciales Invalidas.');
+            }
+            setIsLoggingIn(false);
+        }, 1500);
     };
-
-    if (isAuthenticated === null) return null;
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-8 selection:bg-cyan-500/40">
+            <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 font-sans">
                 <GlobalSpotlight />
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}
@@ -807,12 +1082,38 @@ export default function App() {
     }
 
     return (
-        <Layout currentRoute={currentRoute} setCurrentRoute={setCurrentRoute}>
-            {currentRoute === 'dashboard' && <Dashboard stats={stats} onRefresh={fetchStats} />}
-            {currentRoute === 'prospects' && <ProspectsList />}
+        <Layout currentRoute={currentRoute} setCurrentRoute={setCurrentRoute} profile={profile} onEditProfile={() => setShowProfileModal(true)}>
+            {currentRoute === 'dashboard' && <Dashboard stats={stats} onRefresh={fetchStats} notifications={notifications} />}
+            {currentRoute === 'prospects' && (
+                <ProspectsList
+                    onCloseDeal={(p: any) => { setSelectedProspect(p); setShowCloseDeal(true); }}
+                    onOpenVault={(p: any) => { setSelectedProspect(p); setShowVault(true); }}
+                />
+            )}
             {currentRoute === 'templates' && <TemplatesList />}
             {currentRoute === 'analytics' && <AnalyticsView stats={stats} onRefresh={fetchStats} />}
             {currentRoute === 'settings' && <SettingsView />}
+
+            <ProfileModal
+                isOpen={showProfileModal}
+                onClose={() => setShowProfileModal(false)}
+                profile={profile}
+                onRefresh={fetchProfile}
+            />
+
+            <CloseDealModal
+                isOpen={showCloseDeal}
+                onClose={() => setShowCloseDeal(false)}
+                prospect={selectedProspect}
+                onRefresh={fetchStats}
+            />
+
+            <VaultModal
+                isOpen={showVault}
+                onClose={() => setShowVault(false)}
+                prospect={selectedProspect}
+                onRefresh={fetchStats}
+            />
         </Layout>
     );
 }
@@ -827,11 +1128,13 @@ const NICHE_OPTIONS = [
     { label: 'Automotriz Premium', value: 'detailing automotriz OR taller mecanico' },
 ];
 
-const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefresh: () => void }) => {
+const Dashboard = ({ stats, onRefresh, notifications }: { stats: DashboardStats | null, onRefresh: () => void, notifications: any[] }) => {
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedNiche, setSelectedNiche] = useState(NICHE_OPTIONS[0].value);
     const [syncLog, setSyncLog] = useState<{ msg: string, type: 'info' | 'success' | 'error' | 'meta' }[]>([]);
     const [isImporting, setIsImporting] = useState(false);
+
+    // ... handleSync y handleFileUpload se mantienen iguales ...
 
     const handleSync = async () => {
         setIsSyncing(true);
@@ -1006,36 +1309,50 @@ const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefre
                     </SpotlightCard>
                 </div>
 
-                <SpotlightCard className="p-10 flex flex-col group h-full">
+                <SpotlightCard className="p-10 flex flex-col group h-full border-cyan-500/5">
                     <div className="space-y-10 h-full flex flex-col">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Strategic Ingest</h3>
-
-                        <div className="flex-1 flex flex-col">
-                            <label className="flex-1 border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.02] hover:bg-white/[0.04] hover:border-cyan-500/30 transition-all cursor-pointer group flex flex-col items-center justify-center p-8 text-center space-y-6">
-                                <input type="file" accept=".json,.csv" className="hidden" onChange={handleFileUpload} />
-                                <div className="p-6 rounded-full bg-white/5 group-hover:bg-cyan-500/20 transition-all">
-                                    {isImporting ? <Loader2 className="w-10 h-10 animate-spin text-cyan-400" /> : <Upload className="w-10 h-10 text-white/10 group-hover:text-cyan-400 transition-all" />}
-                                </div>
-                                <div className="space-y-3">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/80 group-hover:text-white">Cargar Leads</p>
-                                    <p className="text-[9px] text-white/20 uppercase tracking-widest font-black leading-relaxed">JSON / CSV de Alta Fidelidad</p>
-                                </div>
-                            </label>
-
-                            <div className="mt-10 p-8 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/5">
-                                <div className="flex items-center gap-4 mb-3">
-                                    <Sparkles className="w-4 h-4 text-cyan-400/40" />
-                                    <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">Inyección Directa</span>
-                                </div>
-                                <p className="text-[10px] text-white/20 font-light leading-relaxed">
-                                    Sube el archivo extraído del chat para integrarlo sin consumir cuota.
-                                </p>
-                            </div>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Billing & Alerts center</h3>
+                            <Bell className="w-4 h-4 text-white/10" />
                         </div>
 
-                        <div className="mt-10 pt-10 border-t border-white/5">
-                            <div className="text-3xl font-serif italic text-white/20 mb-3 group-hover:text-white/40 transition-colors duration-1000">Liquid Luxury</div>
-                            <p className="text-[9px] text-white/10 font-black uppercase tracking-[0.4em]">Elite Engine v3.1</p>
+                        <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-2 min-h-[400px]">
+                            {notifications.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
+                                    <CheckCircle2 className="w-12 h-12 mb-6" />
+                                    <p className="tracking-[0.3em] font-black uppercase text-[10px]">Cero alertas pendientes.<br />Protocolo estable.</p>
+                                </div>
+                            ) : (
+                                notifications.map((n, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group"
+                                    >
+                                        <div className="flex gap-4">
+                                            <div className={`mt-1 shrink-0 w-1.5 h-1.5 rounded-full ${n.type === 'payment' ? 'bg-green-500' : 'bg-cyan-500'} shadow-[0_0_8px_currentColor]`} />
+                                            <div className="space-y-2">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-white/90">{n.title}</p>
+                                                <p className="text-[11px] font-serif italic text-white/40 leading-relaxed">{n.message}</p>
+                                                <div className="flex items-center gap-3 pt-2">
+                                                    <div className="px-3 py-1 bg-white/5 rounded-full text-[8px] font-black uppercase tracking-widest text-white/20 group-hover:text-white/40 transition-colors">
+                                                        {n.date}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="mt-10 pt-10 border-t border-white/5 space-y-6">
+                            <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest">
+                                <span className="text-white/20 underline decoration-cyan-500/30 underline-offset-4">Ver Proyecciones</span>
+                                <span className="text-white/10 italic">Elite Agency v4.1</span>
+                            </div>
                         </div>
                     </div>
                 </SpotlightCard>

@@ -1,6 +1,6 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/api/cron/sync/route": "app/api/cron/sync/route.js",
-  "/page": "app/page.js",
-  "/api/whatsapp/qr/route": "app/api/whatsapp/qr/route.js"
+  "/api/whatsapp/qr/route": "app/api/whatsapp/qr/route.js",
+  "/page": "app/page.js"
 }
