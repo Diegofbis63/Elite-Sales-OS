@@ -149,6 +149,17 @@ export async function updateProspect(id: string, data: any) {
     }
 }
 
+export async function deleteProspect(id: string) {
+    try {
+        if (!db) return { success: false };
+        await db.delete(prospects).where(eq(prospects.id, id));
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting prospect:", error);
+        return { success: false };
+    }
+}
+
 export async function importLeads(leads: any[]) {
     try {
         const added = await injectLeads(leads, "Importación Manual");

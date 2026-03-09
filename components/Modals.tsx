@@ -34,8 +34,15 @@ export const CloseDealModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpe
             {isOpen && (
                 <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
                     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-2xl">
-                        <h3 className="text-2xl font-serif font-light tracking-[0.1em] uppercase text-white/90">{t('modal_close_deal_title')} <span className="text-white/20 italic">{t('modal_close_deal_accent')}</span></h3>
-                        <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black mt-2 mb-10">{prospect?.business_name}</p>
+                        <div className="flex justify-between items-center mb-10">
+                            <div>
+                                <h3 className="text-2xl font-serif font-light tracking-[0.1em] uppercase text-white/90">{t('modal_close_deal_title')} <span className="text-white/20 italic">{t('modal_close_deal_accent')}</span></h3>
+                                <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black mt-2">{prospect?.business_name}</p>
+                            </div>
+                            <button onClick={onClose} className="p-3 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                                <X className="w-5 h-5 text-white/40" />
+                            </button>
+                        </div>
 
                         <form onSubmit={handleSubmit} className="space-y-8">
                             <div className="grid grid-cols-2 gap-8">
@@ -191,7 +198,12 @@ export const LeadFormModal = ({ isOpen, onClose, onRefresh, prospect }: { isOpen
             {isOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
-                        <h3 className="text-xl font-serif mb-8 tracking-widest uppercase">{prospect ? t('modal_lead_edit') : t('modal_lead_new')} <span className="text-white/20 italic">{t('modal_lead_entity')}</span></h3>
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-xl font-serif tracking-widest uppercase">{prospect ? t('modal_lead_edit') : t('modal_lead_new')} <span className="text-white/20 italic">{t('modal_lead_entity')}</span></h3>
+                            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                <X className="w-5 h-5 text-white/20" />
+                            </button>
+                        </div>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <input placeholder={t('modal_lead_placeholder_name')} required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             <input placeholder={t('modal_lead_placeholder_business')} required className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm" value={formData.business_name} onChange={e => setFormData({ ...formData, business_name: e.target.value })} />

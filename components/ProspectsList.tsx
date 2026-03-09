@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MessageSquare, Lock as LucideLock, CheckCircle2, X, Edit2, Loader2, Sparkles, ChevronDown, Copy, Eye, EyeOff } from 'lucide-react';
+import { Plus, MessageSquare, Lock as LucideLock, CheckCircle2, X, Edit2, Trash2, Database } from 'lucide-react';
 import { SpotlightCard } from './SpotlightCard';
-import { getProspects, updateProspectStatus, cancelDeal, updateProspectFinancials, updateProjectVault, updateProspect, createProspect, queueMessage } from '@/lib/actions';
+import { getProspects, updateProspectStatus, deleteProspect, queueMessage } from '@/lib/actions';
 import { useLanguage } from './LanguageContext';
 
 export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDeal }: { searchQuery?: string, onEdit: (p: any) => void, onOpenVault: (p: any) => void, onCloseDeal: (p: any) => void }) => {
@@ -50,9 +50,9 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
         if (res.success) fetchProspects();
     };
 
-    const handleCancelDeal = async (id: string) => {
-        if (confirm(t('leads_cancel_confirm'))) {
-            const res = await cancelDeal(id);
+    const handleDelete = async (id: string) => {
+        if (confirm(t('delete_confirm'))) {
+            const res = await deleteProspect(id);
             if (res.success) fetchProspects();
         }
     };
@@ -142,47 +142,61 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                     </div>
                                                 </td>
                                                 <td className="px-12 py-10 text-right">
-                                                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
-                                                        <button
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <motion.button
+                                                            initial={{ opacity: 0, scale: 0.8 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            transition={{ delay: 0.1 }}
                                                             onClick={(e) => { e.stopPropagation(); setSelectedProspect(p); setShowWhatsApp(true); }}
                                                             title={t('leads_action_wa')}
-                                                            className="p-4 rounded-2xl bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:scale-110 transition-all"
+                                                            className="p-3 rounded-xl bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/40 transition-all"
                                                         >
-                                                            <MessageSquare className="w-5 h-5" />
-                                                        </button>
-                                                        {p.status === 'closed' ? (
-                                                            <div className="flex items-center gap-3">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); onOpenVault(p); }}
-                                                                    title={t('leads_action_vault')}
-                                                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/40 hover:scale-110 transition-all"
-                                                                >
-                                                                    <LucideLock className="w-5 h-5" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleCancelDeal(p.id); }}
-                                                                    title={t('leads_action_cancel')}
-                                                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/40 hover:scale-110 transition-all"
-                                                                >
-                                                                    <X className="w-5 h-5" />
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <button
+                                                            <MessageSquare className="w-4 h-4" />
+                                                        </motion.button>
+
+                                                        {p.status === 'closed' && (
+                                                            <motion.button
+                                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                                animate={{ opacity: 1, scale: 1 }}
+                                                                onClick={(e) => { e.stopPropagation(); onOpenVault(p); }}
+                                                                title={t('leads_action_vault')}
+                                                                className="p-3 rounded-xl bg-white/5 border border-white/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/40 transition-all"
+                                                            >
+                                                                <LucideLock className="w-4 h-4" />
+                                                            </motion.button>
+                                                        )}
+
+                                                        {p.status !== 'closed' && (
+                                                            <motion.button
+                                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                                animate={{ opacity: 1, scale: 1 }}
                                                                 onClick={(e) => { e.stopPropagation(); onCloseDeal(p); }}
                                                                 title={t('leads_action_close')}
-                                                                className="p-4 rounded-2xl bg-white/5 border border-white/10 text-green-400 hover:bg-green-500/20 hover:border-green-500/40 hover:scale-110 transition-all"
+                                                                className="p-3 rounded-xl bg-white/5 border border-white/10 text-green-400 hover:bg-green-500/20 hover:border-green-500/40 transition-all"
                                                             >
-                                                                <CheckCircle2 className="w-5 h-5" />
-                                                            </button>
+                                                                <CheckCircle2 className="w-4 h-4" />
+                                                            </motion.button>
                                                         )}
-                                                        <button
+
+                                                        <motion.button
+                                                            initial={{ opacity: 0, scale: 0.8 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
                                                             onClick={(e) => { e.stopPropagation(); onEdit(p); }}
                                                             title={t('leads_action_edit')}
-                                                            className="p-4 rounded-2xl bg-white text-black hover:bg-cyan-400 hover:text-white hover:scale-110 transition-all shadow-xl"
+                                                            className="p-3 rounded-xl bg-white text-black hover:bg-cyan-400 hover:text-white transition-all shadow-xl"
                                                         >
-                                                            <Edit2 className="w-5 h-5 font-black" />
-                                                        </button>
+                                                            <Edit2 className="w-4 h-4 font-black" />
+                                                        </motion.button>
+
+                                                        <motion.button
+                                                            initial={{ opacity: 0, scale: 0.8 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}
+                                                            title={t('delete')}
+                                                            className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </motion.button>
                                                     </div>
                                                 </td>
                                             </motion.tr>
@@ -215,7 +229,7 @@ export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, 
         await queueMessage(prospect.phone, message);
         setIsSending(false);
         onClose();
-        alert(t('copy_success')); // Or add a specific "queued" message
+        alert(t('copy_success'));
     };
 
     return (
