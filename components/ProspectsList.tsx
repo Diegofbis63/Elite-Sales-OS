@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, MessageSquare, Lock as LucideLock, CheckCircle2, X, Edit2, Loader2, Sparkles, ChevronDown, Copy, Eye, EyeOff } from 'lucide-react';
 import { SpotlightCard } from './SpotlightCard';
 import { getProspects, updateProspectStatus, cancelDeal, updateProspectFinancials, updateProjectVault, updateProspect, createProspect, queueMessage } from '@/lib/actions';
+import { useLanguage } from './LanguageContext';
 
 export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDeal }: { searchQuery?: string, onEdit: (p: any) => void, onOpenVault: (p: any) => void, onCloseDeal: (p: any) => void }) => {
+    const { t } = useLanguage();
     const [prospectsList, setProspectsList] = useState<any[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [selectedProspect, setSelectedProspect] = useState<any>(null);
@@ -59,15 +61,15 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-1000">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
                 <div className="space-y-4">
-                    <h1 className="text-5xl font-serif font-light tracking-tight text-white/95">Strategic <span className="text-white/20 italic">Portfolio</span></h1>
-                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">Segmentación de Alta Fidelidad por IA.</p>
+                    <h1 className="text-5xl font-serif font-light tracking-tight text-white/95 uppercase">{t('leads_title')} <span className="text-white/20 italic">Hub</span></h1>
+                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">{t('leads_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-6">
                     <button
                         onClick={() => onEdit(null)}
                         className="px-10 py-6 bg-white text-black text-[10px] font-black tracking-[0.3em] uppercase rounded-3xl flex items-center gap-3 hover:shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all whitespace-nowrap"
                     >
-                        <Plus className="w-4 h-4" /> Nuevo Lead
+                        <Plus className="w-4 h-4" /> {t('leads_new_btn')}
                     </button>
                 </div>
             </div>
@@ -78,11 +80,11 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-white/5 text-white/20 text-[9px] font-black uppercase tracking-[0.4em] bg-white/[0.01]">
-                                    <th className="px-12 py-10 font-black">Entidades / Corporación</th>
-                                    <th className="px-12 py-10 font-black">Industria</th>
+                                    <th className="px-12 py-10 font-black">{t('leads_table_entity')}</th>
+                                    <th className="px-12 py-10 font-black">{t('leads_table_industry')}</th>
                                     <th className="px-12 py-10 font-black">Canal Directo</th>
-                                    <th className="px-12 py-10 font-black">Status</th>
-                                    <th className="px-12 py-10 text-right font-black">Despacho</th>
+                                    <th className="px-12 py-10 font-black">{t('leads_table_status')}</th>
+                                    <th className="px-12 py-10 text-right font-black">{t('leads_table_actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -122,54 +124,62 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                     </div>
                                                 </td>
                                                 <td className="px-12 py-10">
-                                                    <select
-                                                        value={p.status || 'cold'}
-                                                        onChange={(e) => handleStatusUpdate(p.id, e.target.value)}
-                                                        className={`appearance-none px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-[0.4em] border outline-none cursor-pointer transition-all ${getStatusColor(p.status)} shadow-sm`}
-                                                    >
-                                                        <option value="cold" className="bg-[#0a0a0a]">COLD</option>
-                                                        <option value="contacted" className="bg-[#0a0a0a]">CONTACTED</option>
-                                                        <option value="interested" className="bg-[#0a0a0a]">INTERESTED</option>
-                                                        <option value="closed" className="bg-[#0a0a0a]">CLOSED</option>
-                                                        <option value="cancelled" className="bg-[#0a0a0a]">CANCELLED</option>
-                                                    </select>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-2 h-2 rounded-full ${getStatusColor(p.status).split(' ')[0].replace('text-', 'bg-')}`} />
+                                                        <select
+                                                            value={p.status || 'cold'}
+                                                            onChange={(e) => handleStatusUpdate(p.id, e.target.value)}
+                                                            className="bg-transparent text-[10px] font-black uppercase tracking-[0.2em] text-white/60 outline-none cursor-pointer hover:text-white transition-all appearance-none"
+                                                        >
+                                                            <option value="cold" className="bg-[#0a0a0a]">COLD</option>
+                                                            <option value="contacted" className="bg-[#0a0a0a]">CONTACTED</option>
+                                                            <option value="interested" className="bg-[#0a0a0a]">INTERESTED</option>
+                                                            <option value="closed" className="bg-[#0a0a0a]">CLOSED</option>
+                                                            <option value="cancelled" className="bg-[#0a0a0a]">CANCELLED</option>
+                                                        </select>
+                                                    </div>
                                                 </td>
                                                 <td className="px-12 py-10 text-right">
-                                                    <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-700">
+                                                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setSelectedProspect(p); setShowWhatsApp(true); }}
-                                                            className="p-4 rounded-full bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all"
+                                                            title="WhatsApp Bridge"
+                                                            className="p-4 rounded-2xl bg-white/5 border border-white/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/40 hover:scale-110 transition-all"
                                                         >
-                                                            <MessageSquare className="w-4 h-4" />
+                                                            <MessageSquare className="w-5 h-5" />
                                                         </button>
                                                         {p.status === 'closed' ? (
                                                             <div className="flex items-center gap-3">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); onOpenVault(p); }}
-                                                                    className="p-4 rounded-full bg-white/5 border border-white/10 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/40 transition-all"
+                                                                    title="Project Vault"
+                                                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/40 hover:scale-110 transition-all"
                                                                 >
-                                                                    <LucideLock className="w-4 h-4" />
+                                                                    <LucideLock className="w-5 h-5" />
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleCancelDeal(p.id); }}
-                                                                    className="p-4 rounded-full bg-white/5 border border-white/10 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all"
+                                                                    title="Cancel Deal"
+                                                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/40 hover:scale-110 transition-all"
                                                                 >
-                                                                    <X className="w-4 h-4" />
+                                                                    <X className="w-5 h-5" />
                                                                 </button>
                                                             </div>
                                                         ) : (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); onCloseDeal(p); }}
-                                                                className="p-4 rounded-full bg-white/5 border border-white/10 text-green-400 hover:bg-green-500/10 hover:border-green-500/40 transition-all"
+                                                                title="Close Deal"
+                                                                className="p-4 rounded-2xl bg-white/5 border border-white/10 text-green-400 hover:bg-green-500/20 hover:border-green-500/40 hover:scale-110 transition-all"
                                                             >
-                                                                <CheckCircle2 className="w-4 h-4" />
+                                                                <CheckCircle2 className="w-5 h-5" />
                                                             </button>
                                                         )}
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); onEdit(p); }}
-                                                            className="p-4 rounded-full bg-white/5 border border-white/10 text-white/20 hover:text-white hover:bg-white/10 transition-all"
+                                                            title="Edit Lead"
+                                                            className="p-4 rounded-2xl bg-white text-black hover:bg-cyan-400 hover:text-white hover:scale-110 transition-all shadow-xl"
                                                         >
-                                                            <Edit2 className="w-4 h-4" />
+                                                            <Edit2 className="w-5 h-5 font-black" />
                                                         </button>
                                                     </div>
                                                 </td>

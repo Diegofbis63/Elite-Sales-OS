@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Loader2, Bell, CheckCircle2 } from 'lucide-react';
 import { SpotlightCard } from './SpotlightCard';
 import { syncProspects, importLeads } from '@/lib/actions';
+import { useLanguage } from './LanguageContext';
 
 const NICHE_OPTIONS = [
     { label: 'Salud y Estética (Clínicas)', value: 'clinica OR estetica OR odontologia OR psicologo OR consultorio' },
@@ -17,6 +18,7 @@ const NICHE_OPTIONS = [
 ];
 
 export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { stats: any, onRefresh: () => void, notifications: any[], onNavigate: (route: string) => void }) => {
+    const { t } = useLanguage();
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedNiche, setSelectedNiche] = useState(NICHE_OPTIONS[0].value);
     const [syncLog, setSyncLog] = useState<{ msg: string, type: 'info' | 'success' | 'error' | 'meta' }[]>([]);
@@ -46,18 +48,18 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
     };
 
     const kpiData = [
-        { label: 'Ingresos Proyectados', value: stats?.projectedRevenue || '$0', trend: '+14% Mensual', route: '/analytics' },
-        { label: 'Leads de Alta Prioridad', value: stats?.withoutWeb || '0', trend: 'Sincronizado', route: '/prospects' },
-        { label: 'Tasa de Conversión', value: stats?.conversionRate || '0%', trend: '+3.2%', route: '/analytics' },
-        { label: 'Alcance Estratégico', value: stats?.messagesSent || '0', trend: 'Activo', route: '/analytics' },
+        { label: t('dash_kpi_revenue'), value: stats?.projectedRevenue || '$0', trend: '+14% Mensual', route: '/analytics' },
+        { label: t('dash_kpi_leads'), value: stats?.withoutWeb || '0', trend: 'Sincronizado', route: '/prospects' },
+        { label: t('dash_kpi_conversion'), value: stats?.conversionRate || '0%', trend: '+3.2%', route: '/analytics' },
+        { label: t('dash_kpi_reach'), value: stats?.messagesSent || '0', trend: 'Activo', route: '/analytics' },
     ];
 
     return (
         <div className="space-y-16 animate-in fade-in duration-1000">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
                 <div className="space-y-4">
-                    <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">Strategic Dashboard</h1>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">Central de Inteligencia Comercial de Lujo.</p>
+                    <h1 className="text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">{t('dash_title')}</h1>
+                    <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">{t('dash_subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <select
@@ -75,7 +77,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                         className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center gap-4 disabled:opacity-50"
                     >
                         {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                        {isSyncing ? 'Buscando Hub' : 'Iniciar Sincro'}
+                        {isSyncing ? t('dash_sync_status') : t('dash_sync_btn')}
                     </button>
                 </div>
             </div>
@@ -108,7 +110,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                         <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.6)] animate-pulse" />
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/90">Deterministic Extraction Terminal</h3>
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/90">{t('dash_terminal_title')}</h3>
                             </div>
                             <div className="px-5 py-2 hover:bg-white/5 rounded-full text-[9px] font-mono text-white/20 tracking-widest uppercase cursor-default transition-colors">
                                 Outscraper Engine Active
@@ -158,7 +160,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                 <SpotlightCard className="p-10 border-cyan-500/5">
                     <div className="space-y-10 h-full flex flex-col">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">Billing & Alerts center</h3>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">{t('dash_billing_title')}</h3>
                             <Bell className="w-4 h-4 text-white/10" />
                         </div>
 

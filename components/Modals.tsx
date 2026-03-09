@@ -43,13 +43,20 @@ export const CloseDealModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpe
                                 </div>
                                 <div className="space-y-4">
                                     <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Cuotas</label>
-                                    <div className="relative">
-                                        <select value={formData.installments} onChange={e => setFormData({ ...formData, installments: Number(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-2xl font-serif text-white/90 appearance-none">
-                                            <option value={1} className="bg-[#0a0a0a]">1 Cuota</option>
-                                            <option value={2} className="bg-[#0a0a0a]">2 Cuotas</option>
-                                            <option value={3} className="bg-[#0a0a0a]">3 Cuotas</option>
-                                        </select>
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 pointer-events-none" />
+                                    <div className="flex gap-2">
+                                        {[1, 2, 3].map((num) => (
+                                            <button
+                                                key={num}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, installments: num })}
+                                                className={`flex-1 py-5 rounded-2xl border transition-all text-xs font-black uppercase tracking-widest ${formData.installments === num
+                                                        ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]'
+                                                        : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10 hover:border-white/20'
+                                                    }`}
+                                            >
+                                                {num} {num === 1 ? 'Cuota' : 'Cuotas'}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -95,8 +102,8 @@ export const VaultModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpen: b
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[250] flex items-end justify-end p-4 bg-black/60 backdrop-blur-sm">
-                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="w-full max-w-lg h-full bg-[#0a0a0a] border-l border-white/10 p-12 overflow-y-auto custom-scrollbar shadow-2xl">
+                <div className="fixed inset-0 z-[250] flex items-end justify-end bg-black/60 backdrop-blur-sm">
+                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="w-full max-w-lg h-[calc(100vh-6rem)] mt-24 bg-[#0a0a0a] border-l border-white/10 p-12 overflow-y-auto custom-scrollbar shadow-2xl">
                         <div className="flex justify-between items-center mb-12">
                             <div>
                                 <h3 className="text-2xl font-serif font-light tracking-widest uppercase text-white">Project <span className="text-white/20 italic">Vault</span></h3>
