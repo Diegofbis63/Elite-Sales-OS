@@ -138,6 +138,8 @@ export const translations = {
         modal_whatsapp_title: 'Bridge de',
         modal_whatsapp_accent: 'WhatsApp',
         modal_whatsapp_placeholder: 'Escribe tu mensaje estratégico...',
+        modal_whatsapp_projects: 'Seleccionar Proyectos',
+        modal_whatsapp_multimedia: 'Multimedia',
 
         modal_lead_edit: 'Editar',
         modal_lead_new: 'Nuevo',
@@ -355,6 +357,8 @@ export const translations = {
         modal_whatsapp_title: 'WhatsApp',
         modal_whatsapp_accent: 'Bridge',
         modal_whatsapp_placeholder: 'Write your strategic message...',
+        modal_whatsapp_projects: 'Select Projects',
+        modal_whatsapp_multimedia: 'Multimedia',
 
         modal_lead_edit: 'Edit',
         modal_lead_new: 'New',

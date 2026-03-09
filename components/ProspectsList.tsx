@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MessageSquare, Lock as LucideLock, CheckCircle2, X, Edit2, Trash2, Database } from 'lucide-react';
+import { Plus, MessageSquare, Lock as LucideLock, CheckCircle2, X, Edit2, Trash2, Database, Briefcase, Film, ChevronDown } from 'lucide-react';
+import { INITIAL_PROJECTS, Project } from '@/lib/projects';
 import { SpotlightCard } from './SpotlightCard';
 import { getProspects, updateProspectStatus, deleteProspect, queueMessage } from '@/lib/actions';
 import { useLanguage } from './LanguageContext';
@@ -219,9 +220,10 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
 };
 
 export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, onClose: () => void, prospect: any }) => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [message, setMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [showProjects, setShowProjects] = useState(false);
 
     const handleSend = async () => {
         if (!message) return;
@@ -232,20 +234,90 @@ export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, 
         alert(t('copy_success'));
     };
 
+    const handleSelectProject = (project: Project) => {
+        const content = project[language];
+        const projectText = `
+*${content.name.toUpperCase()}*
+🚀 ${content.description}
+
+💎 *PROPUESTA DE VALOR:*
+${content.value_props.map(v => `• ${v}`).join('\n')}
+
+📈 *RETORNO DE INVERSIÓN:*
+${content.roi_metric}
+
+🔗 *DEMO EN VIVO:*
+${project.vercel_url}
+`.trim();
+        setMessage(projectText);
+        setShowProjects(false);
+    };
+
     return (
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
+                        <button onClick={onClose} className="absolute top-8 right-8 p-3 hover:bg-white/5 rounded-full transition-all text-white/20 hover:text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+
                         <h3 className="text-xl font-serif mb-6 tracking-widest uppercase">{t('modal_whatsapp_title')} <span className="text-white/20 italic">{t('modal_whatsapp_accent')}</span></h3>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest mb-8">{t('leads_table_channel')} : {prospect?.business_name}</p>
+                        <p className="text-[10px] text-white/40 uppercase tracking-widest mb-8">{t('leads_table_channel')} : {prospect?.business_name || prospect?.name}</p>
+
+                        {/* Selector de Proyectos & Multimedia */}
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowProjects(!showProjects)}
+                                    className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-cyan-400 hover:bg-cyan-500/10 transition-all"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <Briefcase className="w-3.5 h-3.5" />
+                                        {t('modal_whatsapp_projects')}
+                                    </div>
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${showProjects ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {showProjects && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute top-full left-0 w-full mt-2 bg-[#121212] border border-white/10 rounded-xl overflow-hidden shadow-2xl z-10"
+                                        >
+                                            {INITIAL_PROJECTS.map((project) => (
+                                                <button
+                                                    key={project.id}
+                                                    onClick={() => handleSelectProject(project)}
+                                                    className="w-full px-5 py-4 text-left text-[10px] text-white/60 hover:text-white hover:bg-white/5 border-b border-white/5 last:border-0 transition-all uppercase tracking-wider"
+                                                >
+                                                    {project[language].name}
+                                                </button>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            <button
+                                onClick={() => { }} // Placeholder
+                                className="h-12 px-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-purple-400 hover:bg-purple-500/10 transition-all"
+                            >
+                                <Film className="w-3.5 h-3.5" />
+                                {t('modal_whatsapp_multimedia')}
+                            </button>
+                        </div>
+
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder={t('modal_whatsapp_placeholder')}
-                            className="w-full h-40 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all"
+                            className="w-full h-52 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all resize-none font-serif leading-relaxed"
                         />
+
                         <button
                             onClick={handleSend}
                             disabled={isSending || !message}
