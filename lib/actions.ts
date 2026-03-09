@@ -38,8 +38,8 @@ export async function verifyConnection() {
     }
 }
 
-export async function syncProspects() {
-    return await runProspectingSync();
+export async function syncProspects(nicheQuery?: string) {
+    return await runProspectingSync(nicheQuery);
 }
 
 // --- Prospects ---

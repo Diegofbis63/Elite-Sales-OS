@@ -817,28 +817,40 @@ export default function App() {
     );
 }
 
+const NICHE_OPTIONS = [
+    { label: 'Salud y Estética (Clínicas)', value: 'clinica OR estetica OR odontologia OR psicologo OR consultorio' },
+    { label: 'Fitness y Deportes (Gimnasios)', value: 'gimnasio OR crossfit OR pilates OR centro de entrenamiento' },
+    { label: 'Belleza y Cuidado (Salones)', value: 'peluqueria OR barberia OR salon de belleza OR centro de uñas' },
+    { label: 'Mascotas y Veterinaria', value: 'veterinaria OR clinica veterinaria OR peluqueria canina' },
+    { label: 'Servicios Profesionales', value: 'estudio juridico OR abogados OR estudio contable OR arquitectos' },
+    { label: 'Real Estate / Inmobiliarias', value: 'inmobiliaria OR bienes raices OR desarrollista' },
+    { label: 'Automotriz Premium', value: 'detailing automotriz OR taller mecanico' },
+];
+
 const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefresh: () => void }) => {
     const [isSyncing, setIsSyncing] = useState(false);
-
+    const [selectedNiche, setSelectedNiche] = useState(NICHE_OPTIONS[0].value);
     const [syncLog, setSyncLog] = useState<{ msg: string, type: 'info' | 'success' | 'error' | 'meta' }[]>([]);
     const [isImporting, setIsImporting] = useState(false);
 
     const handleSync = async () => {
         setIsSyncing(true);
-        setSyncLog([{ msg: "INICIANDO PROTOCOLO DETERMINISTA v4...", type: 'meta' }]);
+        const nicheLabel = NICHE_OPTIONS.find(n => n.value === selectedNiche)?.label || 'Nicho General';
+        setSyncLog([{ msg: `INICIANDO PROTOCOLO DETERMINISTA v5 [B2B EXPANSION]...`, type: 'meta' }]);
+        setSyncLog(prev => [...prev, { msg: `OBJETIVO: ${nicheLabel}`, type: 'meta' }]);
 
         try {
-            setSyncLog(prev => [...prev, { msg: "CONSULTANDO OUTSCRAPER API...", type: 'info' }]);
-            const result = await syncProspects() as { success: boolean; leadsAdded?: number; error?: string };
+            setSyncLog(prev => [...prev, { msg: "BARRIDO DE RED EN CURSO (OUTSCRAPER ENGINE)...", type: 'info' }]);
+            const result = await syncProspects(selectedNiche) as { success: boolean; leadsAdded?: number; error?: string };
 
             if (result.success) {
                 setSyncLog(prev => [
                     ...prev,
-                    { msg: `EXTRACCIÓN COMPLETADA EXITOSAMENTE.`, type: 'success' },
-                    { msg: `RESULTADO: ${result.leadsAdded} NUEVOS LEADS INTEGRADOS EN NEONDB.`, type: 'success' }
+                    { msg: `EXTRACCIÓN COMPLETADA: ${result.leadsAdded} ENTIDADES FILTRADAS SIN WEB.`, type: 'success' },
+                    { msg: `SUGERENCIA: Los nuevos prospectos han sido integrados en Strategic Portfolio.`, type: 'info' }
                 ]);
             } else {
-                setSyncLog(prev => [...prev, { msg: `FALLO DE PROTOCOLO: ${result.error}`, type: 'error' }]);
+                setSyncLog(prev => [...prev, { msg: `AVISO DE PROTOCOLO: ${result.error}`, type: 'error' }]);
             }
             onRefresh();
         } catch (err) {
@@ -893,14 +905,25 @@ const Dashboard = ({ stats, onRefresh }: { stats: DashboardStats | null, onRefre
                     <h1 className="text-6xl font-serif font-light tracking-tighter text-white/95">Strategic <span className="text-white/20 italic">Dashboard</span></h1>
                     <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">Central de Inteligencia Comercial de Lujo.</p>
                 </div>
-                <button
-                    onClick={handleSync}
-                    disabled={isSyncing}
-                    className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center gap-4 disabled:opacity-50"
-                >
-                    {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                    {isSyncing ? 'Sincronizando' : 'Sincro Automática'}
-                </button>
+                <div className="flex items-center gap-4">
+                    <select
+                        value={selectedNiche}
+                        onChange={(e) => setSelectedNiche(e.target.value)}
+                        className="px-8 py-4 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white/80 focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer appearance-none min-w-[300px]"
+                    >
+                        {NICHE_OPTIONS.map((n, i) => (
+                            <option key={i} value={n.value} className="bg-[#0a0a0a] text-white">{n.label}</option>
+                        ))}
+                    </select>
+                    <button
+                        onClick={handleSync}
+                        disabled={isSyncing}
+                        className="px-10 py-4 bg-white text-black text-[11px] font-black uppercase tracking-[0.4em] rounded-full hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center gap-4 disabled:opacity-50"
+                    >
+                        {isSyncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                        {isSyncing ? 'Buscando Hub' : 'Iniciar Sincro'}
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

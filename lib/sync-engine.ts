@@ -53,8 +53,8 @@ export async function injectLeads(leads: Lead[], source: string): Promise<number
     return totalLeadsAdded;
 }
 
-export async function runProspectingSync(): Promise<SyncResult> {
-    console.log(`📡 MOTOR DETERMINISTA v4 (Outscraper): Iniciando extracción...`);
+export async function runProspectingSync(nicheQuery: string = "clinica OR estetica"): Promise<SyncResult> {
+    console.log(`📡 MOTOR DETERMINISTA v5 (Outscraper): Iniciando extracción de nicho: [${nicheQuery}]...`);
 
     if (!db) {
         console.error("❌ SYSTEM_FATAL: DATABASE_URL missing or connection refused.");
@@ -67,10 +67,11 @@ export async function runProspectingSync(): Promise<SyncResult> {
             throw new Error("CONFIG_ERROR: Falta OUTSCRAPER_API_KEY en el entorno.");
         }
 
-        // Búsqueda: Estéticas y Clínicas en Córdoba, Argentina
-        const query = encodeURIComponent("estetica OR clinica Cordoba Argentina");
-        const limit = 30;
-        const url = `https://api.app.outscraper.com/maps/search-v2?query=${query}&limit=${limit}&language=es`;
+        // Búsqueda Dinámica con Ancla de Ubicación optimizada
+        const locationAnchor = "cerca de Santa Rosa 1016 Cordoba Argentina";
+        const finalQuery = encodeURIComponent(`${nicheQuery} ${locationAnchor}`);
+        const limit = 30; // Límite estricto para proteger cuota
+        const url = `https://api.app.outscraper.com/maps/search-v2?query=${finalQuery}&limit=${limit}&language=es`;
 
         const response = await fetch(url, {
             headers: { 'X-API-KEY': apiKey }
@@ -83,19 +84,27 @@ export async function runProspectingSync(): Promise<SyncResult> {
         const data = await response.json();
 
         if (!data.data || !data.data[0]) {
-            return { success: false, error: "CERO_RESULTADOS: No se localizaron nuevos negocios en esta zona." };
+            return {
+                success: false,
+                error: `CERO_RESULTADOS: No se localizaron nuevos locales del nicho especifico en esta zona de barrido.`
+            };
         }
 
         const places = data.data[0];
 
-        // Filtrado Estratégico: Con teléfono y SIN página web
+        // FILTRO ESTRICTO (CRÍTICO): Con teléfono y SIN página web oficial
         const filteredLeads = places
-            .filter((place: any) => place.phone && !place.site)
+            .filter((place: any) => {
+                // Tiene que tener teléfono Y (no tener sitio web OR el sitio web es un string vacío)
+                const hasPhone = place.phone && place.phone.trim() !== '';
+                const noWebsite = !place.site || place.site.trim() === '';
+                return hasPhone && noWebsite;
+            })
             .map((place: any) => ({
                 name: 'Gerencia',
                 business_name: place.name || 'Negocio Sin Nombre',
                 phone: place.phone,
-                industry: place.type || 'Estética/Salud',
+                industry: place.type || 'B2B Prospect',
                 rating: place.rating ? String(place.rating) : '0',
                 has_website: false,
                 maps_id: place.place_id,
@@ -105,12 +114,12 @@ export async function runProspectingSync(): Promise<SyncResult> {
         if (filteredLeads.length === 0) {
             return {
                 success: false,
-                error: "FILTRADO_TOTAL: Se encontraron negocios pero todos poseen sitio web propio."
+                error: `BARRIDO COMPLETADO: Se analizaron ${places.length} locales del nicho seleccionado. Todos ya poseen sitio web oficial o carecen de teléfono. Sugerencia: Cambiar el nicho en el selector.`
             };
         }
 
         // Inyectar en NeonDB
-        const added = await injectLeads(filteredLeads, "Outscraper Intelligence");
+        const added = await injectLeads(filteredLeads, `Outscraper ${nicheQuery}`);
 
         // Registrar en historial
         await db.insert(sync_history).values({
@@ -126,10 +135,12 @@ export async function runProspectingSync(): Promise<SyncResult> {
     } catch (error: any) {
         console.error("🚨 FALLO CRÍTICO EN SYNC ENGINE:", error);
 
-        await db.insert(sync_history).values({
-            leads_found: 0,
-            status: 'failed'
-        });
+        if (db) {
+            await db.insert(sync_history).values({
+                leads_found: 0,
+                status: 'failed'
+            });
+        }
 
         return {
             success: false,
