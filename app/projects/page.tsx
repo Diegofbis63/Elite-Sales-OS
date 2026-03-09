@@ -145,7 +145,7 @@ export default function ProjectsPage() {
                 />
 
                 {/* Projects Grid - Balanced Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredProjects.map((p, i) => {
                         const content = language === 'en' ? p.en : p.es;
                         return (
@@ -156,7 +156,7 @@ export default function ProjectsPage() {
                             >
                                 <div className="flex flex-col h-full">
                                     {/* Header del Proyecto */}
-                                    <div className="p-8 pb-0 space-y-4">
+                                    <div className="p-6 pb-0 space-y-3">
                                         <div className="flex justify-between items-start">
                                             <div className="flex gap-2">
                                                 <div className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-full">

@@ -25,32 +25,25 @@ export const SpotlightCard = ({ children, className = '', delay = 0, neon = true
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay, ease: [0.23, 1, 0.32, 1] }}
-            className={`group relative overflow-hidden rounded-[2.5rem] bg-[#050505] p-[1px] transition-all duration-700 ${className}`}
+            className={`group relative rounded-[2.5rem] bg-[#0d0d0d] border border-white/5 transition-all duration-700 overflow-hidden ${className}`}
         >
-            {/* Laser Border Effect */}
+            {/* Laser Border Effect - Using Mask Layer */}
             {neon && (
-                <div className="absolute inset-[-50%] pointer-events-none overflow-hidden">
-                    <div className="absolute inset-0 animate-laser bg-[conic-gradient(from_0deg,transparent_0deg,transparent_20deg,#22d3ee_45deg,transparent_70deg)] opacity-40 group-hover:opacity-100 transition-opacity duration-1000" />
+                <div className="absolute inset-0 pointer-events-none rounded-[2.5rem] overflow-hidden laser-mask z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                    <div className="absolute inset-[-500%] animate-laser bg-[conic-gradient(from_0deg,transparent_0deg,transparent_20deg,#22d3ee_45deg,transparent_100deg)]" />
                 </div>
             )}
 
-            {/* Inner Content Container */}
-            <div className="relative h-full w-full rounded-[calc(2.5rem-1px)] bg-[#0a0a0a]/95 backdrop-blur-3xl overflow-hidden px-1">
-                <div
-                    className="pointer-events-none absolute -inset-px opacity-0 transition duration-500"
-                    style={{
-                        opacity,
-                        background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(34,211,238,0.1), transparent 40%)`,
-                    }}
-                />
-                {neon && (
-                    <div
-                        className="pointer-events-none absolute -inset-px opacity-0 transition duration-1000 group-hover:opacity-100"
-                        style={{
-                            background: `radial-gradient(1000px circle at ${position.x}px ${position.y}px, rgba(34,211,238,0.05), transparent 40%)`,
-                        }}
-                    />
-                )}
+            {/* Interactive Spotlight */}
+            <div
+                className="pointer-events-none absolute -inset-px opacity-0 transition duration-500 z-10"
+                style={{
+                    opacity,
+                    background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(34,211,238,0.15), transparent 40%)`,
+                }}
+            />
+
+            <div className="relative z-20 w-full h-full">
                 {children}
             </div>
         </motion.div>
