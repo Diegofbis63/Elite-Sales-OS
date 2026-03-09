@@ -14,16 +14,19 @@ const db = drizzle(client, { schema });
 async function main() {
     console.log('Seeding users...');
 
-    const adminPassword = await bcrypt.hash('elite2024', 10);
+    const adminUser = process.env.ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.ADMIN_PASSWORD || 'elite2024';
+
+    const adminPasswordHash = await bcrypt.hash(adminPass, 10);
     const demoPassword = await bcrypt.hash('demo2024', 10);
 
-    // Limpiar usuarios previos si existen
-    // await db.delete(schema.users);
+    // Limpiar usuarios previos para asegurar que solo existan los actuales
+    await db.delete(schema.users);
 
     await db.insert(schema.users).values([
         {
-            username: 'admin',
-            password: adminPassword,
+            username: adminUser,
+            password: adminPasswordHash,
             role: 'admin'
         },
         {
@@ -40,7 +43,7 @@ async function main() {
     });
 
     console.log('Users seeded successfully');
-    console.log('Admin: admin / elite2024');
+    console.log(`Admin: ${adminUser} / ${adminPass}`);
     console.log('Demo: demo / demo2024');
     process.exit(0);
 }
