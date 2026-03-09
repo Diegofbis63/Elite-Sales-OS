@@ -74,10 +74,27 @@ export async function createProspect(data: any) {
     }
 }
 
-export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
+export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed' | 'cancelled') {
     try {
         if (!db) return { success: false };
         await db.update(prospects).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
+}
+
+export async function cancelDeal(id: string) {
+    try {
+        if (!db) return { success: false };
+        await db.update(prospects).set({
+            status: 'cancelled',
+            total_price: '0',
+            installments: 1,
+            monthly_maintenance: '0',
+            next_payment_due: null,
+            last_interaction: new Date()
+        }).where(eq(prospects.id, id));
         return { success: true };
     } catch (error) {
         return { success: false };
@@ -122,6 +139,7 @@ export async function updateProspect(id: string, data: any) {
             business_name: data.business_name,
             phone: data.phone,
             industry: data.industry,
+            status: data.status,
             last_interaction: new Date()
         }).where(eq(prospects.id, id));
         return { success: true };

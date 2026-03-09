@@ -10,7 +10,7 @@ export const prospects = pgTable('prospects', {
     rating: numeric('rating'),
     has_website: boolean('has_website').default(false),
     maps_id: text('maps_id').unique(),
-    status: text('status').default('cold').$type<'cold' | 'contacted' | 'interested' | 'closed'>(),
+    status: text('status').default('cold').$type<'cold' | 'contacted' | 'interested' | 'closed' | 'cancelled'>(),
 
     // Finanzas ERP
     total_price: numeric('total_price').default('0'),
