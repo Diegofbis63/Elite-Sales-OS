@@ -11,6 +11,38 @@
   --color-app-accent: #10b981;
 }
 
+@keyframes laser-border {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes neon-pulse {
+
+  0%,
+  100% {
+    opacity: 0.8;
+    filter: blur(4px);
+  }
+
+  50% {
+    opacity: 1;
+    filter: blur(8px);
+  }
+}
+
+.animate-laser {
+  animation: laser-border 4s linear infinite;
+}
+
+.animate-neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
 @layer base {
 
   html,

@@ -25,6 +25,7 @@ import {
 import { EliteLayout } from '@/components/EliteLayout';
 import { useLanguage } from '@/components/LanguageContext';
 import { SectionHeader } from '@/components/SectionHeader';
+import { SpotlightCard } from '@/components/SpotlightCard';
 
 import { Project, INITIAL_PROJECTS } from '@/lib/projects';
 import { getProjectsDB, upsertProject, deleteProjectDB } from '@/lib/actions';
@@ -144,22 +145,18 @@ export default function ProjectsPage() {
                 />
 
                 {/* Projects Grid - Balanced Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredProjects.map((p, i) => {
                         const content = language === 'en' ? p.en : p.es;
                         return (
-                            <motion.div
+                            <SpotlightCard
                                 key={p.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.1 }}
-                                className="group relative"
+                                delay={i * 0.1}
+                                className="h-full flex flex-col group"
                             >
-                                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/0 via-cyan-500/0 to-cyan-500/0 rounded-[2.5rem] group-hover:from-white/5 group-hover:via-white/2 group-hover:to-cyan-500/5 blur-xl transition-all duration-1000 -z-10" />
-
-                                <div className="h-full bg-[#0d0d0d] border border-white/5 rounded-[1.5rem] overflow-hidden flex flex-col hover:border-white/10 transition-all duration-700 shadow-xl">
+                                <div className="flex flex-col h-full">
                                     {/* Header del Proyecto */}
-                                    <div className="p-6 pb-0 space-y-3">
+                                    <div className="p-8 pb-0 space-y-4">
                                         <div className="flex justify-between items-start">
                                             <div className="flex gap-2">
                                                 <div className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-full">
@@ -234,7 +231,7 @@ export default function ProjectsPage() {
                                         </a>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </SpotlightCard>
                         );
                     })}
                 </div>

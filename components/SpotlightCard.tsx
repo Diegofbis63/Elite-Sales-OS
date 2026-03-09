@@ -25,24 +25,34 @@ export const SpotlightCard = ({ children, className = '', delay = 0, neon = true
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay, ease: [0.23, 1, 0.32, 1] }}
-            className={`relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-white/[0.01] transition-all duration-700 ${className}`}
+            className={`group relative overflow-hidden rounded-[2.5rem] bg-[#050505] p-[1px] transition-all duration-700 ${className}`}
         >
-            <div
-                className="pointer-events-none absolute -inset-px opacity-0 transition duration-500"
-                style={{
-                    opacity,
-                    background: `radial-gradient(800px circle at ${position.x}px ${position.y}px, rgba(255,255,255,0.06), transparent 40%)`,
-                }}
-            />
+            {/* Laser Border Effect */}
             {neon && (
+                <div className="absolute inset-[-50%] pointer-events-none overflow-hidden">
+                    <div className="absolute inset-0 animate-laser bg-[conic-gradient(from_0deg,transparent_0deg,transparent_20deg,#22d3ee_45deg,transparent_70deg)] opacity-40 group-hover:opacity-100 transition-opacity duration-1000" />
+                </div>
+            )}
+
+            {/* Inner Content Container */}
+            <div className="relative h-full w-full rounded-[calc(2.5rem-1px)] bg-[#0a0a0a]/95 backdrop-blur-3xl overflow-hidden px-1">
                 <div
-                    className="pointer-events-none absolute -inset-px opacity-0 transition duration-1000 group-hover:opacity-100"
+                    className="pointer-events-none absolute -inset-px opacity-0 transition duration-500"
                     style={{
-                        background: `radial-gradient(1200px circle at ${position.x}px ${position.y}px, rgba(34,211,238,0.02), transparent 40%)`,
+                        opacity,
+                        background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(34,211,238,0.1), transparent 40%)`,
                     }}
                 />
-            )}
-            {children}
+                {neon && (
+                    <div
+                        className="pointer-events-none absolute -inset-px opacity-0 transition duration-1000 group-hover:opacity-100"
+                        style={{
+                            background: `radial-gradient(1000px circle at ${position.x}px ${position.y}px, rgba(34,211,238,0.05), transparent 40%)`,
+                        }}
+                    />
+                )}
+                {children}
+            </div>
         </motion.div>
     );
 };
