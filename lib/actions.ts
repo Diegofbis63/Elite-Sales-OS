@@ -15,6 +15,7 @@ cloudinary.config({
 // --- Verification & Sync ---
 export async function verifyConnection() {
     try {
+        if (!db) return { success: false, message: "Base de datos no disponible por falta de variable de entorno." };
         const testName = `Test_${Date.now()}`;
         await db.insert(prospects as any).values({
             name: testName,
@@ -44,6 +45,7 @@ export async function syncProspects() {
 // --- Prospects ---
 export async function getProspects() {
     try {
+        if (!db) return [];
         const results = await db.query.prospects.findMany({
             orderBy: [desc(prospects.createdAt)],
         });
@@ -60,6 +62,7 @@ export async function getProspects() {
 
 export async function createProspect(data: any) {
     try {
+        if (!db) throw new Error("Base de datos no disponible.");
         await db.insert(prospects as any).values({
             ...data,
             maps_id: data.maps_id || `manual_${Date.now()}`
@@ -73,6 +76,7 @@ export async function createProspect(data: any) {
 
 export async function updateProspectStatus(id: string, status: 'cold' | 'contacted' | 'interested' | 'closed') {
     try {
+        if (!db) return { success: false };
         await db.update(prospects as any).set({ status, last_interaction: new Date() }).where(eq(prospects.id, id));
         return { success: true };
     } catch (error) {
@@ -93,6 +97,7 @@ export async function importLeads(leads: any[]) {
 // --- Outbox (WhatsApp Bridge) ---
 export async function queueMessage(phone: string, message: string, mediaUrl?: string) {
     try {
+        if (!db) return { success: false };
         await db.insert(outbox as any).values({
             phone,
             message,
@@ -109,6 +114,7 @@ export async function queueMessage(phone: string, message: string, mediaUrl?: st
 // --- Templates ---
 export async function getTemplates() {
     try {
+        if (!db) return [];
         const t = await db.query.message_templates.findMany();
         return t;
     } catch (error) {
@@ -118,6 +124,7 @@ export async function getTemplates() {
 
 export async function createTemplate(title: string, content: string) {
     try {
+        if (!db) return { success: false, error: "Base de datos no disponible." };
         await db.insert(message_templates as any).values({
             title,
             content,
@@ -162,6 +169,16 @@ export async function uploadToCloudinary(formData: FormData) {
 // --- Stats ---
 export async function getDashboardStats() {
     try {
+        if (!db) {
+            return {
+                projectedRevenue: "$0",
+                hotProspects: 0,
+                conversionRate: "0%",
+                messagesSent: "0",
+                withoutWeb: 0,
+                totalProspects: 0
+            };
+        }
         const all = await getProspects();
         const totalProspects = all.length;
         const hot = all.filter(p => p.status === 'interested').length;
@@ -192,6 +209,7 @@ export async function getDashboardStats() {
 
 export async function processOutbox() {
     try {
+        if (!db) return { success: false, error: "Base de datos no disponible." };
         const pending = await db.query.outbox.findMany({
             where: eq(outbox.status, 'pending')
         });

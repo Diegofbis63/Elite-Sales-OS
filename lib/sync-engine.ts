@@ -22,6 +22,10 @@ interface SyncResult {
  * Inyecta prospectos en la base de datos controlando duplicados.
  */
 export async function injectLeads(leads: Lead[], source: string): Promise<number> {
+    if (!db) {
+        console.error("❌ DB_NOT_FOUND: No se puede inyectar leads sin conexión a DB.");
+        return 0;
+    }
     let totalLeadsAdded = 0;
     for (const lead of leads) {
         try {
@@ -37,7 +41,7 @@ export async function injectLeads(leads: Lead[], source: string): Promise<number
                 has_website: lead.has_website || false,
                 maps_id: maps_id,
                 status: 'cold'
-            }).onConflictDoNothing({
+            } as any).onConflictDoNothing({
                 target: [prospects.maps_id]
             });
 
@@ -49,12 +53,13 @@ export async function injectLeads(leads: Lead[], source: string): Promise<number
     return totalLeadsAdded;
 }
 
-/**
- * Motor de Prospección basado en Outscraper.
- * Extrae negocios reales de Google Maps con alta fidelidad.
- */
 export async function runProspectingSync(): Promise<SyncResult> {
     console.log(`📡 MOTOR DETERMINISTA v4 (Outscraper): Iniciando extracción...`);
+
+    if (!db) {
+        console.error("❌ SYSTEM_FATAL: DATABASE_URL missing or connection refused.");
+        return { success: false, error: "EMERGENCIA: La base de datos no está disponible. Revisa tus variables de entorno en Vercel." };
+    }
 
     try {
         const apiKey = process.env.OUTSCRAPER_API_KEY;
