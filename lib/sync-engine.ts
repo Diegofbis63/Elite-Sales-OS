@@ -53,14 +53,26 @@ export async function injectLeads(leads: Lead[], source: string): Promise<number
     return totalLeadsAdded;
 }
 
-export async function runProspectingSync(nicheQuery: string = "clinica OR estetica"): Promise<SyncResult> {
-    const locationAnchor = "cerca de Santa Rosa 1016 Cordoba Argentina";
-    const finalQuery = encodeURIComponent(`${nicheQuery} ${locationAnchor}`);
+export async function runProspectingSync(nicheQuery: string = "Salud y Estética (Clínicas)"): Promise<SyncResult> {
+    // Mapeo limpio de nichos para Google Maps (Búsqueda Singular Natural)
+    const nicheMap: Record<string, string> = {
+        'Salud y Estética (Clínicas)': 'centro de estetica',
+        'Fitness y Deportes (Gimnasios)': 'gimnasio',
+        'Belleza y Cuidado (Salones)': 'peluqueria',
+        'Servicios Profesionales': 'estudio juridico',
+        'Real Estate / Inmobiliarias': 'inmobiliaria',
+        'Mascotas y Veterinaria': 'veterinaria',
+        'Automotriz Premium': 'taller mecanico'
+    };
+
+    const searchKeyword = nicheMap[nicheQuery] || 'centro de estetica';
+    const locationAnchor = "Santa Rosa 1016 Cordoba Argentina";
+    const finalQuery = encodeURIComponent(`${searchKeyword} cerca de ${locationAnchor}`);
     const limit = 30;
-    // CRÍTICO: Agregar &async=false para recibir datos inmediatos
+    // CRÍTICO: async=false para modo síncrono
     const url = `https://api.app.outscraper.com/maps/search-v2?query=${finalQuery}&limit=${limit}&language=es&async=false`;
 
-    console.log(`📡 MOTOR DETERMINISTA v6 (Outscraper): Iniciando extracción de nicho: [${nicheQuery}]...`);
+    console.log(`📡 MOTOR DETERMINISTA v7 (Outscraper): Iniciando extracción de nicho: [${nicheQuery}]...`);
     console.log("[DEBUG 1] Iniciando Sincro. URL generada:", url);
     console.log("[DEBUG 2] API Key presente:", !!process.env.OUTSCRAPER_API_KEY);
 
@@ -86,78 +98,78 @@ export async function runProspectingSync(nicheQuery: string = "clinica OR esteti
         }
 
         const data = await response.json();
-        // Mostrar las primeras 200 letras de la respuesta cruda para ver si es un Error o un Task ID
-        console.log("[DEBUG 4] Respuesta Cruda JSON:", JSON.stringify(data).substring(0, 200));
+        console.log("[DEBUG 4] Respuesta Cruda JSON (Muestra):", JSON.stringify(data).substring(0, 200));
 
         if (!data.data || !data.data[0]) {
-            console.log("[DEBUG 5] FALLO: data.data[0] es undefined. La API no devolvió el array de lugares.");
+            console.log("[DEBUG 5] FALLO: data.data[0] es undefined o nulo.");
             return {
                 success: false,
-                error: `CERO_RESULTADOS (DEBUG): La API de extracción no devolvió el formato esperado o falló la búsqueda.`
+                error: `CERO_RESULTADOS (v7): Outscraper no localizó lugares para "${searchKeyword}" en esta zona.`
             };
         }
 
         const places = data.data[0];
         console.log(`[DEBUG 6] ÉXITO DE API: Se recibieron ${places.length} locales crudos. Iniciando filtrado...`);
 
-        // Inspeccionar un local crudo para ver si las propiedades 'phone' o 'site' cambiaron de nombre
         if (places.length > 0) {
             console.log("[DEBUG 7] Muestra de Propiedades del Local 1:", Object.keys(places[0]).join(", "));
         }
 
-        // FILTRO ESTRICTO (RELAJADO PARA DEBUG): Con teléfono y SIN página web oficial
+        // FILTRO ESTRICTO (v7): Con teléfono y SIN website (propiedad exacta confirmada)
         const filteredLeads = places
             .filter((place: any) => {
-                // Tiene que tener teléfono Y (no tener sitio web OR el sitio web es un string vacío)
                 const hasPhone = place.phone && String(place.phone).trim() !== '';
-                // Acepta undefined, null, string vacío, o si el campo se llama 'website' en lugar de 'site'
-                const siteUrl = place.site || place.website;
-                const noWebsite = !siteUrl || String(siteUrl).trim() === '';
+                // Propiedad 'website' confirmada por telemetría anterior
+                const noWebsite = !place.website || String(place.website).trim() === '';
                 return hasPhone && noWebsite;
             })
             .map((place: any) => ({
                 name: 'Gerencia',
                 business_name: place.name || 'Negocio Sin Nombre',
                 phone: place.phone,
-                industry: place.type || 'B2B Prospect',
+                industry: place.type || searchKeyword,
                 rating: place.rating ? String(place.rating) : '0',
                 has_website: false,
                 maps_id: place.place_id,
                 status: 'cold',
             }));
 
-        console.log(`[DEBUG 8] Tras filtrado estricto, quedaron ${filteredLeads.length} prospectos listos para NeonDB.`);
+        console.log(`[DEBUG 8] Tras filtrado estricto (v7), quedaron ${filteredLeads.length} prospectos.`);
 
         if (filteredLeads.length === 0) {
             return {
                 success: false,
-                error: `BARRIDO COMPLETADO: Se analizaron ${places.length} locales. Todos poseen sitio web oficial según el motor de filtrado v6.`
+                error: `BARRIDO COMPLETADO: Se analizaron ${places.length} locales. Todos ya poseen website o carecen de teléfono público.`
             };
         }
 
-        // Inyectar en NeonDB
-        const added = await injectLeads(filteredLeads, `Outscraper ${nicheQuery}`);
+        // Inyectar en NeonDB con protección amigable
+        try {
+            const added = await injectLeads(filteredLeads, `Outscraper ${searchKeyword}`);
 
-        // Registrar en historial
-        await db.insert(sync_history).values({
-            leads_found: added,
-            status: 'success'
-        });
+            // Registrar éxito en historial
+            await db.insert(sync_history).values({
+                leads_found: added,
+                status: 'success'
+            });
 
-        return {
-            success: true,
-            leadsAdded: added
-        };
+            return { success: true, leadsAdded: added };
+        } catch (dbErr: any) {
+            console.error("❌ FALLO DE INSERCIÓN EN DB:", dbErr);
+            return { success: false, error: `DB_INSERT_ERROR: Los datos se extrajeron pero falló la carga a NeonDB: ${dbErr.message}` };
+        }
 
     } catch (error: any) {
         console.error("🚨 FALLO CRÍTICO EN SYNC ENGINE:", error);
 
-        if (db) {
-            await db.insert(sync_history).values({
-                leads_found: 0,
-                status: 'failed'
-            });
-        }
+        try {
+            if (db) {
+                await db.insert(sync_history).values({
+                    leads_found: 0,
+                    status: 'failed'
+                });
+            }
+        } catch (e) { }
 
         return {
             success: false,

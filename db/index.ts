@@ -3,18 +3,15 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 
 /**
- * Inicialización segura de la base de datos.
- * Evita el crash en tiempo de compilación o durante el renderizado del servidor de componentes cliente
- * si la variable DATABASE_URL falta momentáneamente en el entorno.
+ * Inicialización de base de datos resiliente.
+ * Prioriza variables limpias de la integración nativa de Vercel (POSTGRES_URL).
  */
-const url = process.env.DATABASE_URL?.trim();
+const url = (process.env.POSTGRES_URL || process.env.DATABASE_URL || '').trim();
 
 if (!url && process.env.NODE_ENV === 'production') {
-    console.warn("⚠️ DATABASE_URL no detectada en producción. Las operaciones de DB fallarán.");
+    console.warn("⚠️ ALERTA: No se detectó URL de base de datos. Verifica la integración de Vercel Storage.");
 }
 
-// Exportamos el cliente y la instancia de db de forma que el error se maneje en ejecución
-// y no detenga la carga del módulo (aislamiento de Server Actions).
 // @ts-ignore
 export const client = url ? neon(url) : null;
 // @ts-ignore
