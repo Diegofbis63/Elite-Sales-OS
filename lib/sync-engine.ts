@@ -23,33 +23,32 @@ interface SyncResult {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 async function getLeadsFromMapsAPI(): Promise<Lead[]> {
-    console.log("🛠️ FALLBACK SELECTO: Activando Motor de Código Puro (Google Maps API)...");
+    console.log("🛠️ FALLBACK MAPS: Activando Motor de Código Puro...");
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) throw new Error("GOOGLE_MAPS_API_KEY no detectada.");
+    if (!apiKey) return [];
 
-    // Búsqueda específica en Córdoba
     const query = encodeURIComponent("clinicas estetica cordoba argentina");
     const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${apiKey}`;
 
-    const response = await fetch(url);
-    const data = await response.json();
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-    if (data.status === "REQUEST_DENIED") {
-        console.error("❌ ERROR CRÍTICO: Google Maps API denegado. Verifica restricciones de IP en tu consola de Google Cloud.");
+        if (data.status === "REQUEST_DENIED") {
+            console.error("❌ MAPS DENIED: Verifica restricciones de IP en Google Cloud Console.");
+            return [];
+        }
+
+        if (!data.results) return [];
+
+        return data.results.map((place: any) => ({
+            business_name: place.name,
+            phone: place.formatted_phone_number || "Contactar vía Maps",
+            name: "Gerencia"
+        })).slice(0, 12);
+    } catch (err) {
         return [];
     }
-
-    if (!data.results || data.results.length === 0) {
-        console.log("⚠️ Maps API no devolvió resultados en este ciclo.");
-        return [];
-    }
-
-    // Filtrar y mapear a formato Lead
-    return data.results.map((place: any) => ({
-        business_name: place.name,
-        phone: place.formatted_phone_number || "Fijar en Maps",
-        name: "Gerencia"
-    })).slice(0, 12);
 }
 
 async function injectLeads(leads: Lead[], source: string): Promise<number> {
@@ -85,59 +84,69 @@ async function injectLeads(leads: Lead[], source: string): Promise<number> {
 }
 
 export async function runProspectingSync(): Promise<SyncResult> {
-    console.log(`🚀 PROTOCOLO HÍBRIDO: Iniciando ciclo inteligente...`);
+    console.log(`🚀 PROTOCOLO HÍBRIDO v3: Iniciando ciclo inteligente...`);
 
-    // Usamos el modelo solicitado por el usuario que tiene más cuota (Gemini 3.1 Flash Lite)
     const PRIMARY_MODEL = "gemini-3.1-flash-lite-preview";
-    const prompt = `Busca en Google Maps y la web 12 negocios locales reales en Córdoba Capital, Argentina (estética, salud o inmobiliaria) SIN sitio web propio. Devuelve SOLO un JSON válido: { "leads": [{ "name", "business_name", "phone" }] }`;
+    const SECONDARY_MODEL = "gemini-2.5-flash-lite";
+    const prompt = `Busca 10 negocios reales en Córdoba Argentina (estética o medicina) SIN web propia. Devuelve SOLO JSON: { "leads": [{ "name", "business_name", "phone" }] }`;
 
+    // 1. Intento con Gemini 3.1 + Grounding (Búsqueda Real)
     try {
-        console.log(`📡 Consultando motor principal: ${PRIMARY_MODEL}...`);
-        const model = genAI.getGenerativeModel({
-            model: PRIMARY_MODEL,
-            tools: [{ googleSearchRetrieval: {} } as any]
-        });
-
+        console.log(`📡 Consultando ${PRIMARY_MODEL} con búsqueda en vivo...`);
+        const model = genAI.getGenerativeModel(
+            { model: PRIMARY_MODEL, tools: [{ googleSearchRetrieval: {} } as any] },
+            { apiVersion: 'v1beta' }
+        );
         const result = await model.generateContent(prompt);
         const text = result.response.text().replace(/```json|```/g, "").trim();
-
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("IA no devolvió JSON válido.");
-
-        const data = JSON.parse(jsonMatch[0]) as SyncResponse;
-        const totalLeadsAdded = await injectLeads(data.leads, "Gemini 3.1 (IA)");
-
-        return { success: true, leadsAdded: totalLeadsAdded };
-
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error("❌ FALLO MOTOR PRINCIPAL:", errorMessage);
-
-        // Fallback 1: CÓDIGO PURO (Maps API)
-        try {
-            const mapsLeads = await getLeadsFromMapsAPI();
-            if (mapsLeads.length > 0) {
-                const added = await injectLeads(mapsLeads, "Maps API Directa");
-                return { success: true, leadsAdded: added, note: "Respuesta táctica: Maps API activada debido a fallo en IA." };
-            }
-        } catch (mapsErr: unknown) {
-            console.error("❌ FALLO FALLBACK MAPS:", mapsErr);
+        if (jsonMatch) {
+            const added = await injectLeads(JSON.parse(jsonMatch[0]).leads, "Gemini 3.1 (Live Search)");
+            return { success: true, leadsAdded: added };
         }
-
-        // Fallback 2: IA Estable (Gemini 2.5 Flash Lite)
-        try {
-            console.log("⚠️ Activando Motor Secundario (Gemini 2.5 Flash Lite)...");
-            const fallbackModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-            const fResult = await fallbackModel.generateContent(prompt);
-            const fText = fResult.response.text().replace(/```json|```/g, "").trim();
-            const fJsonMatch = fText.match(/\{[\s\S]*\}/);
-            if (!fJsonMatch) throw new Error("Fallback falló.");
-
-            const fData = JSON.parse(fJsonMatch[0]) as SyncResponse;
-            const added = await injectLeads(fData.leads, "Gemini 2.5 (Fallback)");
-            return { success: true, leadsAdded: added, note: "Resiliencia operativa: Motor 2.5 activado." };
-        } catch (fErr: any) {
-            return { success: false, error: `Protocolo Totalmente Superado: Cuota agotada en todos los motores. Detalle: ${errorMessage}` };
-        }
+    } catch (e: any) {
+        console.warn("⚠️ Fallo o Límite en Búsqueda Real. Pasando a Conocimiento Interno...");
     }
+
+    // 2. Intento con Gemini 3.1 (Conocimiento Interno - Sin Tools para evitar 429)
+    try {
+        console.log(`🧠 Consultando ${PRIMARY_MODEL} (Conocimiento de Base)...`);
+        const model = genAI.getGenerativeModel({ model: PRIMARY_MODEL });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().replace(/```json|```/g, "").trim();
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const added = await injectLeads(JSON.parse(jsonMatch[0]).leads, "Gemini 3.1 (Memory)");
+            return { success: true, leadsAdded: added, note: "Velocidad Máxima: Basado en conocimiento de red." };
+        }
+    } catch (e: any) {
+        console.warn("⚠️ Fallo en Motor 3.1. Probando Resiliencia 2.5...");
+    }
+
+    // 3. Intento con Gemini 2.5 (Sin Tools)
+    try {
+        console.log(`🏗️ Activando Resiliencia: ${SECONDARY_MODEL}...`);
+        const model = genAI.getGenerativeModel({ model: SECONDARY_MODEL });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().replace(/```json|```/g, "").trim();
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const added = await injectLeads(JSON.parse(jsonMatch[0]).leads, "Gemini 2.5 (Fallback)");
+            return { success: true, leadsAdded: added, note: "Pánico de Cuota: Motor de auxilio activado." };
+        }
+    } catch (e) {
+        console.error("❌ Todos los motores de IA fallaron.");
+    }
+
+    // 4. Último Recurso: API de Maps Directa (Puede estar bloqueada por IP)
+    const mapsLeads = await getLeadsFromMapsAPI();
+    if (mapsLeads.length > 0) {
+        const added = await injectLeads(mapsLeads, "Google Maps Direct");
+        return { success: true, leadsAdded: added, note: "Respuesta de Emergencia: API de Maps activada." };
+    }
+
+    return {
+        success: false,
+        error: "ECLIPSE TOTAL DE SISTEMAS: Cuota de IA agotada y API de Maps bloqueada por IP. Recomendación: Configurar facturación o limpiar restricciones de IP en Google Cloud Console."
+    };
 }
