@@ -18,8 +18,8 @@ export default function RootLayout({
                 {/* Global Background Video - Liquid Luxury Integration */}
                 <motion.div
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.2 }}
-                    transition={{ duration: 2, ease: "easeOut" }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1.5, ease: "linear" }}
                     className="fixed inset-0 z-[-10] overflow-hidden pointer-events-none"
                 >
                     <video
@@ -31,8 +31,6 @@ export default function RootLayout({
                     >
                         <source src="/elite.mp4" type="video/mp4" />
                     </video>
-                    {/* Subtle aesthetic overlay to maintain CRM depth */}
-                    <div className="absolute inset-0 bg-[#0a0a0a]/40" />
                 </motion.div>
 
                 <LanguageProvider>
