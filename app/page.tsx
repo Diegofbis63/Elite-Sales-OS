@@ -588,11 +588,14 @@ const ProspectsList = ({ onCloseDeal, onOpenVault }: { onCloseDeal: (p: any) => 
         fetchProspects();
     }, []);
 
-    const filteredProspects = prospects.filter(p =>
-        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.industry?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredProspects = (prospects || []).filter(p => {
+        const query = searchQuery.toLowerCase();
+        return (
+            (p.name?.toLowerCase() || '').includes(query) ||
+            (p.business_name?.toLowerCase() || '').includes(query) ||
+            (p.industry?.toLowerCase() || '').includes(query)
+        );
+    });
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
