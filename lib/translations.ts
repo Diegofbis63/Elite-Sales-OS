@@ -18,6 +18,27 @@ export const translations = {
         header_director: 'Director Elite',
         header_role: 'Socio Autorizado',
 
+        // Dashboard
+        dash_title: 'Strategic Dashboard',
+        dash_subtitle: 'Central de Inteligencia Comercial de Lujo.',
+        dash_kpi_revenue: 'Ingresos Proyectados',
+        dash_kpi_leads: 'Leads de Alta Prioridad',
+        dash_kpi_conversion: 'Tasa de Conversión',
+        dash_kpi_reach: 'Alcance Estratégico',
+        dash_sync_btn: 'Iniciar Sincro',
+        dash_sync_status: 'Buscando Hub',
+        dash_terminal_title: 'Deterministic Extraction Terminal',
+        dash_billing_title: 'Billing & Alerts Center',
+
+        // Leads (Prospects)
+        leads_title: 'Pipeline',
+        leads_subtitle: 'Segmentación de Alta Fidelidad por IA.',
+        leads_new_btn: 'Nuevo Lead',
+        leads_table_entity: 'Entidades / Corporación',
+        leads_table_industry: 'Industria',
+        leads_table_status: 'Status',
+        leads_table_actions: 'Despacho',
+
         // Projects Page
         projects_title_main: 'Project',
         projects_title_accent: 'Vault',
@@ -61,6 +82,27 @@ export const translations = {
         header_sync: 'Sync Hub',
         header_director: 'Elite Director',
         header_role: 'Authorized Partner',
+
+        // Dashboard
+        dash_title: 'Strategic Dashboard',
+        dash_subtitle: 'Luxury Commercial Intelligence Center.',
+        dash_kpi_revenue: 'Projected Revenue',
+        dash_kpi_leads: 'High Priority Leads',
+        dash_kpi_conversion: 'Conversion Rate',
+        dash_kpi_reach: 'Strategic Reach',
+        dash_sync_btn: 'Start Sync',
+        dash_sync_status: 'Syncing Hub',
+        dash_terminal_title: 'Deterministic Extraction Terminal',
+        dash_billing_title: 'Billing & Alerts Center',
+
+        // Leads (Prospects)
+        leads_title: 'Pipeline',
+        leads_subtitle: 'High-Fidelity AI Segmentation.',
+        leads_new_btn: 'New Lead',
+        leads_table_entity: 'Entities / Corporation',
+        leads_table_industry: 'Industry',
+        leads_table_status: 'Status',
+        leads_table_actions: 'Dispatch',
 
         // Projects Page
         projects_title_main: 'Project',
