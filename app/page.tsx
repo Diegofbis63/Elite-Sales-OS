@@ -19,7 +19,8 @@ import {
     Send,
     Upload,
     CheckCircle2,
-    Lock as LucideLock
+    Lock as LucideLock,
+    ChevronDown
 } from 'lucide-react';
 import {
     getProspects,
@@ -28,6 +29,7 @@ import {
     syncProspects,
     updateProspectStatus,
     queueMessage,
+    updateProspect,
     uploadToCloudinary,
     createProspect,
     createTemplate,
@@ -38,7 +40,7 @@ import {
     updateProspectFinancials,
     updateProjectVault,
     getNotifications
-} from '@/lib/actions';
+} from '../lib/actions';
 
 // --- Components ---
 
@@ -369,11 +371,14 @@ const CloseDealModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpen: bool
                                 </div>
                                 <div className="space-y-4">
                                     <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">Cuotas (Finance)</label>
-                                    <select value={formData.installments} onChange={e => setFormData({ ...formData, installments: Number(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-2xl font-serif text-white/90">
-                                        <option value={1}>1 Cuota (Full)</option>
-                                        <option value={2}>2 Cuotas</option>
-                                        <option value={3}>3 Cuotas</option>
-                                    </select>
+                                    <div className="relative">
+                                        <select value={formData.installments} onChange={e => setFormData({ ...formData, installments: Number(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-2xl font-serif text-white/90 focus:outline-none appearance-none pr-10">
+                                            <option value={1} className="bg-[#0a0a0a] text-white">1 Cuota (Full)</option>
+                                            <option value={2} className="bg-[#0a0a0a] text-white">2 Cuotas</option>
+                                            <option value={3} className="bg-[#0a0a0a] text-white">3 Cuotas</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 pointer-events-none" />
+                                    </div>
                                 </div>
                             </div>
 
@@ -569,13 +574,12 @@ const Header = ({ profile, onEditProfile }: { profile: any, onEditProfile: () =>
 
 // --- Page Components ---
 
-const ProspectsList = ({ onCloseDeal, onOpenVault }: { onCloseDeal: (p: any) => void, onOpenVault: (p: any) => void }) => {
+const ProspectsList = ({ onCloseDeal, onOpenVault, onEdit }: { onCloseDeal: (p: any) => void, onOpenVault: (p: any) => void, onEdit: (p: any) => void }) => {
     const [prospects, setProspects] = useState<any[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [selectedProspect, setSelectedProspect] = useState<any>(null);
     const [showWhatsApp, setShowWhatsApp] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [showNewModal, setShowNewModal] = useState(false);
 
     const fetchProspects = async () => {
         setIsFetching(true);
@@ -618,26 +622,27 @@ const ProspectsList = ({ onCloseDeal, onOpenVault }: { onCloseDeal: (p: any) => 
                     <h1 className="text-5xl font-serif font-light tracking-tight text-white/95">Strategic <span className="text-white/20 italic">Portfolio</span></h1>
                     <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">Segmentación de Alta Fidelidad por IA.</p>
                 </div>
-                <div className="flex items-center gap-6">
-                    <div className="relative group">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-cyan-500/50 transition-colors" />
+                <div className="flex items-center justify-between mb-8">
+                    <SpotlightCard className="flex-1 bg-white/5 border border-white/10 rounded-3xl p-2 flex items-center">
+                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 mr-4">
+                            <Search className="w-5 h-5 text-white/30" />
+                        </div>
                         <input
+                            type="text"
                             placeholder="FILTRAR PORTFOLIO..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-14 pr-10 py-3.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-[0.3em] focus:outline-none focus:border-white/20 transition-all w-64"
+                            className="bg-transparent text-[11px] font-black tracking-[0.3em] text-white/90 placeholder-white/20 focus:outline-none w-full uppercase"
                         />
-                    </div>
+                    </SpotlightCard>
                     <button
-                        onClick={() => setShowNewModal(true)}
-                        className="px-10 py-3.5 bg-white text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-full transition-all hover:shadow-[0_10px_30px_rgba(255,255,255,0.2)] flex items-center gap-3"
+                        onClick={() => onEdit(null)}
+                        className="ml-8 px-10 py-6 bg-white text-black text-[10px] font-black tracking-[0.3em] uppercase rounded-3xl flex items-center gap-3 hover:shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all whitespace-nowrap"
                     >
                         <Plus className="w-4 h-4" /> Nuevo Lead
                     </button>
                 </div>
             </div>
-
-            <NewLeadModal isOpen={showNewModal} onClose={() => setShowNewModal(false)} onRefresh={fetchProspects} />
 
             <SpotlightCard className="overflow-hidden border-0" neon={false}>
                 <div className="bg-[#0f0f0f]/30 backdrop-blur-3xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
@@ -719,7 +724,10 @@ const ProspectsList = ({ onCloseDeal, onOpenVault }: { onCloseDeal: (p: any) => 
                                                                 <CheckCircle2 className="w-4 h-4" />
                                                             </button>
                                                         )}
-                                                        <button className="p-4 rounded-full bg-white/5 border border-white/10 text-white/20 hover:text-white hover:bg-white/10 transition-all">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); onEdit(p); }}
+                                                            className="p-4 rounded-full bg-white/5 border border-white/10 text-white/20 hover:text-white hover:bg-white/10 transition-all"
+                                                        >
                                                             <Edit2 className="w-4 h-4" />
                                                         </button>
                                                     </div>
@@ -743,19 +751,38 @@ const ProspectsList = ({ onCloseDeal, onOpenVault }: { onCloseDeal: (p: any) => 
     );
 };
 
-const NewLeadModal = ({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose: () => void, onRefresh: () => void }) => {
+const LeadFormModal = ({ isOpen, onClose, onRefresh, prospect }: { isOpen: boolean, onClose: () => void, onRefresh: () => void, prospect?: any }) => {
     const [formData, setFormData] = useState({ name: '', business_name: '', phone: '', industry: '' });
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (prospect) {
+            setFormData({
+                name: prospect.name || '',
+                business_name: prospect.business_name || '',
+                phone: prospect.phone || '',
+                industry: prospect.industry || ''
+            });
+        } else {
+            setFormData({ name: '', business_name: '', phone: '', industry: '' });
+        }
+    }, [prospect, isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        const res = await createProspect({ ...formData, status: 'cold' });
+        let res;
+        if (prospect) {
+            res = await updateProspect(prospect.id, formData);
+        } else {
+            res = await createProspect({ ...formData, status: 'cold' });
+        }
+
         if (res.success) {
             onRefresh();
             onClose();
         } else {
-            alert("Error al guardar lead: " + res.error);
+            alert("Error al guardar: " + (res as any).error);
         }
         setIsSaving(false);
     };
@@ -986,6 +1013,7 @@ export default function App() {
     const [showCloseDeal, setShowCloseDeal] = useState(false);
     const [showVault, setShowVault] = useState(false);
     const [selectedProspect, setSelectedProspect] = useState<any>(null);
+    const [showNewLead, setShowNewLead] = useState(false);
 
     useEffect(() => {
         const session = localStorage.getItem('elite_session');
@@ -1085,17 +1113,20 @@ export default function App() {
     }
 
     return (
-        <Layout currentRoute={currentRoute} setCurrentRoute={setCurrentRoute} profile={profile} onEditProfile={() => setShowProfileModal(true)}>
-            {currentRoute === 'dashboard' && <Dashboard stats={stats} onRefresh={fetchStats} notifications={notifications} />}
-            {currentRoute === 'prospects' && (
-                <ProspectsList
-                    onCloseDeal={(p: any) => { setSelectedProspect(p); setShowCloseDeal(true); }}
-                    onOpenVault={(p: any) => { setSelectedProspect(p); setShowVault(true); }}
-                />
-            )}
-            {currentRoute === 'templates' && <TemplatesList />}
-            {currentRoute === 'analytics' && <AnalyticsView stats={stats} onRefresh={fetchStats} />}
-            {currentRoute === 'settings' && <SettingsView />}
+        <>
+            <Layout currentRoute={currentRoute} setCurrentRoute={setCurrentRoute} profile={profile} onEditProfile={() => setShowProfileModal(true)}>
+                {currentRoute === 'dashboard' && <Dashboard stats={stats} onRefresh={fetchStats} notifications={notifications} />}
+                {currentRoute === 'prospects' && (
+                    <ProspectsList
+                        onCloseDeal={(p: any) => { setSelectedProspect(p); setShowCloseDeal(true); }}
+                        onOpenVault={(p: any) => { setSelectedProspect(p); setShowVault(true); }}
+                        onEdit={(p: any) => { setSelectedProspect(p); setShowNewLead(true); }}
+                    />
+                )}
+                {currentRoute === 'templates' && <TemplatesList />}
+                {currentRoute === 'analytics' && <AnalyticsView stats={stats} onRefresh={fetchStats} />}
+                {currentRoute === 'settings' && <SettingsView />}
+            </Layout>
 
             <ProfileModal
                 isOpen={showProfileModal}
@@ -1117,7 +1148,14 @@ export default function App() {
                 prospect={selectedProspect}
                 onRefresh={fetchStats}
             />
-        </Layout>
+
+            <LeadFormModal
+                isOpen={showNewLead}
+                onClose={() => { setShowNewLead(false); setSelectedProspect(null); }}
+                onRefresh={fetchStats}
+                prospect={selectedProspect}
+            />
+        </>
     );
 }
 

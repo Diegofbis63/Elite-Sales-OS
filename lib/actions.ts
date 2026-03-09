@@ -114,6 +114,23 @@ export async function updateProjectVault(id: string, details: any) {
     }
 }
 
+export async function updateProspect(id: string, data: any) {
+    try {
+        if (!db) return { success: false };
+        await db.update(prospects).set({
+            name: data.name,
+            business_name: data.business_name,
+            phone: data.phone,
+            industry: data.industry,
+            last_interaction: new Date()
+        }).where(eq(prospects.id, id));
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating prospect:", error);
+        return { success: false };
+    }
+}
+
 export async function importLeads(leads: any[]) {
     try {
         const added = await injectLeads(leads, "Importación Manual");
