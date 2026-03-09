@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Briefcase,
@@ -26,14 +26,33 @@ import { EliteLayout } from '@/components/EliteLayout';
 import { useLanguage } from '@/components/LanguageContext';
 
 import { Project, INITIAL_PROJECTS } from '@/lib/projects';
+import { getProjectsDB, upsertProject, deleteProjectDB } from '@/lib/actions';
 
 
 export default function ProjectsPage() {
     const { language, t } = useLanguage();
-    const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchProjects = async () => {
+        setIsLoading(true);
+        const dbProjects = await getProjectsDB();
+        if (dbProjects && dbProjects.length > 0) {
+            setProjects(dbProjects as any as Project[]);
+        } else {
+            // Si la DB está vacía, usar los iniciales pero NO guardarlos automáticamente
+            // para evitar duplicados en el primer render si hay lentitud
+            setProjects(INITIAL_PROJECTS);
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchProjects();
+    }, []);
 
     const filteredProjects = projects.filter(p => {
         const content = language === 'en' ? p.en : p.es;
@@ -59,23 +78,38 @@ export default function ProjectsPage() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm(t('delete_confirm') || 'Are you sure?')) {
-            setProjects(projects.filter(p => p.id !== id));
+            const res = await deleteProjectDB(id);
+            if (res.success) {
+                setProjects(projects.filter(p => p.id !== id));
+            }
         }
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (editingProject) {
-            const exists = projects.find(p => p.id === editingProject.id);
-            if (exists) {
-                setProjects(projects.map(p => p.id === editingProject.id ? editingProject : p));
+            const res = await upsertProject(editingProject.id, {
+                es: editingProject.es,
+                en: editingProject.en,
+                vercel_url: editingProject.vercel_url,
+                doc_url: editingProject.doc_url,
+                estimated_price: editingProject.estimated_price
+            });
+
+            if (res.success) {
+                const exists = projects.find(p => p.id === editingProject.id);
+                if (exists) {
+                    setProjects(projects.map(p => p.id === editingProject.id ? editingProject : p));
+                } else {
+                    setProjects([editingProject, ...projects]);
+                }
+                setIsModalOpen(false);
+                setEditingProject(null);
             } else {
-                setProjects([editingProject, ...projects]);
+                alert("Error saving project to database");
             }
-            setIsModalOpen(false);
-            setEditingProject(null);
         }
     };
 

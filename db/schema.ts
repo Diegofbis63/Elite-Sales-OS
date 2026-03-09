@@ -60,3 +60,13 @@ export const sync_history = pgTable('sync_history', {
     leads_found: integer('leads_found').default(0),
     status: text('status').notNull(), // success, failed
 });
+
+export const projects = pgTable('projects', {
+    id: text('id').primaryKey(),
+    es: jsonb('es').notNull(), // { name, description, value_props: [], niche, roi_metric }
+    en: jsonb('en').notNull(),
+    vercel_url: text('vercel_url'),
+    doc_url: text('doc_url'),
+    estimated_price: text('estimated_price').default('0'),
+    created_at: timestamp('created_at').defaultNow(),
+});

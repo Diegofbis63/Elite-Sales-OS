@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from '../db';
-import { prospects, outbox, message_templates, sync_history, user_profile } from '../db/schema';
+import { prospects, outbox, message_templates, sync_history, user_profile, projects } from '../db/schema';
 import { desc, eq, sql, isNull, gte, lte, and } from 'drizzle-orm';
 import { v2 as cloudinary } from 'cloudinary';
 import { runProspectingSync, injectLeads } from './sync-engine';
@@ -251,14 +251,21 @@ export async function getProfile() {
 
 export async function updateProfile(data: any) {
     try {
-        if (!db) return { success: false };
+        if (!db) return { success: false, error: "No DB" };
+        console.log("Updating profile with data:", { ...data, photo_base64: data.photo_base64 ? 'BASE64_STUFF' : 'empty' });
+
         await db.update(user_profile).set({
-            ...data,
+            full_name: data.full_name,
+            role: data.role,
+            photo_base64: data.photo_base64,
             updated_at: new Date()
         }).where(eq(user_profile.id, 1));
+
+        console.log("Profile updated successfully");
         return { success: true };
     } catch (error) {
-        return { success: false };
+        console.error("Error updating profile:", error);
+        return { success: false, error: String(error) };
     }
 }
 
@@ -401,5 +408,54 @@ export async function getNotifications() {
         return notifications;
     } catch (error) {
         return [];
+    }
+}
+
+// --- Projects Persistence ---
+export async function getProjectsDB() {
+    try {
+        if (!db) return [];
+        const results = await db.query.projects.findMany();
+        return results;
+    } catch (error) {
+        console.error("Error fetching projects:", error);
+        return [];
+    }
+}
+
+export async function upsertProject(id: string, data: any) {
+    try {
+        if (!db) return { success: false };
+
+        // Verificar si existe para decidir insert o update
+        const existing = await db.query.projects.findFirst({
+            where: eq(projects.id, id)
+        });
+
+        if (existing) {
+            await db.update(projects).set({
+                ...data,
+            }).where(eq(projects.id, id));
+        } else {
+            await db.insert(projects).values({
+                id,
+                ...data,
+            });
+        }
+        return { success: true };
+    } catch (error) {
+        console.error("Error saving project:", error);
+        return { success: false, error: String(error) };
+    }
+}
+
+export async function deleteProjectDB(id: string) {
+    try {
+        if (!db) return { success: false };
+        await db.delete(projects).where(eq(projects.id, id));
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting project:", error);
+        return { success: false };
     }
 }
