@@ -10,7 +10,8 @@ import {
     Settings,
     Search,
     Sparkles,
-    Bell
+    Bell,
+    Briefcase
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ export const Sidebar = () => {
     const navItems = [
         { id: '/', icon: LayoutDashboard, label: 'Resumen' },
         { id: '/prospects', icon: Users, label: 'Lead List' },
+        { id: '/projects', icon: Briefcase, label: 'Proyectos' },
         { id: '/templates', icon: MessageSquare, label: 'Copywriting' },
         { id: '/analytics', icon: BarChart3, label: 'Performance' },
         { id: '/settings', icon: Settings, label: 'Ajustes' },
