@@ -221,7 +221,7 @@ export default function TemplatesPage() {
                                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            className="absolute right-0 top-full mt-4 w-full sm:w-80 bg-black border border-white/10 rounded-[1.5rem] sm:rounded-3xl overflow-hidden z-[100] shadow-2xl"
+                                            className="absolute right-0 top-full mt-4 w-full sm:w-80 bg-black/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] sm:rounded-3xl overflow-hidden z-[100] shadow-2xl"
                                         >
                                             <div className="bg-cyan-600 px-6 py-4">
                                                 <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white/90">{t('copy_niche_selector')}</p>
@@ -268,7 +268,7 @@ export default function TemplatesPage() {
                                 <div className="flex justify-between items-start mb-6 lg:mb-8">
                                     <div className="flex items-center gap-4">
                                         <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
-                                        <h3 className="text-[10px] lg:text-[11px] font-black uppercase tracking-[0.3em] text-white/80">{t_item.title}</h3>
+                                        <h3 className="text-[10px] lg:text-[11px] font-black uppercase tracking-[0.3em] text-white">{t_item.title}</h3>
                                     </div>
                                     <div className="flex gap-2 lg:opacity-0 group-hover:opacity-100 transition-all">
                                         <button onClick={() => handleOpenModal(t_item)} className="p-2 sm:p-3 bg-white/5 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors"><Edit3 className="w-3.5 h-3.5" /></button>
@@ -276,13 +276,13 @@ export default function TemplatesPage() {
                                     </div>
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-serif italic text-white/40 leading-relaxed line-clamp-6 whitespace-pre-line">{t_item.content}</p>
+                                    <p className="text-sm font-serif italic text-white/60 leading-relaxed line-clamp-6 whitespace-pre-line">{t_item.content}</p>
                                 </div>
                                 <div className="mt-6 lg:mt-8 pt-6 lg:pt-8 border-t border-white/5 flex items-center justify-between">
-                                    <span className="text-[8px] font-black text-white/10 uppercase tracking-widest">{t_item.content.length} {t('copy_chars')}</span>
+                                    <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">{t_item.content.length} {t('copy_chars')}</span>
                                     <button
                                         onClick={() => { navigator.clipboard.writeText(t_item.content); alert(t('copy_copied')); }}
-                                        className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-cyan-500/40 hover:text-cyan-400 transition-colors flex items-center gap-2"
+                                        className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-cyan-500/80 hover:text-cyan-400 transition-colors flex items-center gap-2"
                                     >
                                         <Copy className="w-3 h-3" /> {t('copy_btn_copy')}
                                     </button>
@@ -301,7 +301,7 @@ export default function TemplatesPage() {
                             initial={{ opacity: 0, y: 50 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 50 }}
-                            className="w-full max-w-5xl bg-[#0a0a0a] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+                            className="w-full max-w-5xl bg-black/80 backdrop-blur-2xl border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
                         >
                             <div className="bg-cyan-600 p-12 flex justify-between items-center shrink-0">
                                 <div className="space-y-2">
@@ -310,7 +310,7 @@ export default function TemplatesPage() {
                                         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white/60">{t('copy_strategy_suggested')}</span>
                                     </div>
                                     <h2 className="text-4xl font-sans font-black uppercase tracking-widest text-white">{selectedNiche}</h2>
-                                    <p className="text-[10px] text-white/40 uppercase tracking-[0.4em] font-black">{t('copy_strategy_subtitle')}</p>
+                                    <p className="text-[10px] text-white/60 uppercase tracking-[0.4em] font-black">{t('copy_strategy_subtitle')}</p>
                                 </div>
                                 <button onClick={() => setSelectedNiche(null)} className="p-5 bg-black/20 rounded-full hover:bg-black/40 text-white transition-all"><X className="w-6 h-6" /></button>
                             </div>
@@ -327,10 +327,10 @@ export default function TemplatesPage() {
                                 ))}
                             </div>
 
-                            <div className="p-12 border-t border-white/5 bg-black/50 shrink-0 flex gap-6">
+                            <div className="p-12 border-t border-white/5 bg-black/80 shrink-0 flex gap-6">
                                 <button
                                     onClick={() => setSelectedNiche(null)}
-                                    className="flex-1 py-6 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-[0.4em] rounded-3xl hover:bg-white/5 transition-all"
+                                    className="flex-1 py-6 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-[0.4em] rounded-3xl hover:bg-white/5 transition-all"
                                 >
                                     {t('cancel')}
                                 </button>
@@ -351,18 +351,18 @@ export default function TemplatesPage() {
             <AnimatePresence>
                 {showModal && (
                     <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
-                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-2xl">
+                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-2xl bg-black/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-2xl">
                             <div className="flex justify-between items-center mb-10">
                                 <div>
-                                    <h3 className="text-2xl font-serif font-light tracking-[0.1em] uppercase text-white/90">{selectedTemplate ? t('copy_modal_title_edit') : t('copy_modal_title_new')} <span className="text-white/20 italic">{t('copy_modal_accent')}</span></h3>
-                                    <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] font-black mt-2">{t('copy_modal_subtitle')}</p>
+                                    <h3 className="text-2xl font-serif font-light tracking-[0.1em] uppercase text-white/90">{selectedTemplate ? t('copy_modal_title_edit') : t('copy_modal_title_new')} <span className="text-white/40 italic">{t('copy_modal_accent')}</span></h3>
+                                    <p className="text-[10px] text-white/50 uppercase tracking-[0.4em] font-black mt-2">{t('copy_modal_subtitle')}</p>
                                 </div>
-                                <button onClick={() => setShowModal(false)} className="p-4 bg-white/5 rounded-full hover:bg-white/10 text-white/20 hover:text-white transition-all"><X className="w-5 h-5" /></button>
+                                <button onClick={() => setShowModal(false)} className="p-4 bg-white/5 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all"><X className="w-5 h-5" /></button>
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('copy_label_title')}</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-2">{t('copy_label_title')}</label>
                                     <input
                                         required
                                         placeholder={t('copy_placeholder_title')}
@@ -372,7 +372,7 @@ export default function TemplatesPage() {
                                     />
                                 </div>
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('copy_label_content')}</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-2">{t('copy_label_content')}</label>
                                     <textarea
                                         required
                                         placeholder={t('copy_placeholder_content')}
@@ -380,7 +380,7 @@ export default function TemplatesPage() {
                                         onChange={e => setFormData({ ...formData, content: e.target.value })}
                                         className="w-full h-64 bg-white/5 border border-white/10 rounded-2xl p-6 text-base font-serif italic text-white/80 placeholder-white/5 focus:outline-none focus:border-cyan-500/50 transition-all resize-none custom-scrollbar"
                                     />
-                                    <p className="text-[8px] text-white/10 uppercase tracking-widest text-right">{t('copy_tip')}</p>
+                                    <p className="text-[8px] text-white/30 uppercase tracking-widest text-right">{t('copy_tip')}</p>
                                 </div>
 
                                 <button disabled={isSaving} className="w-full py-6 bg-white text-black text-[11px] font-black uppercase tracking-[0.5em] rounded-3xl hover:shadow-[0_20px_40px_rgba(255,255,255,0.2)] transition-all flex items-center justify-center gap-4">

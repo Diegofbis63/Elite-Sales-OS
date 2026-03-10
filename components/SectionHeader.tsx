@@ -21,9 +21,9 @@ export const SectionHeader = ({ icon: Icon, label, title, accent, subtitle, righ
                     <span className="text-xs font-black uppercase tracking-[0.5em]">{label}</span>
                 </div>
                 <h1 className="text-4xl sm:text-6xl lg:text-8xl font-sans font-black tracking-tighter text-white leading-tight lg:leading-none">
-                    {title.toUpperCase()} {accent && <span className="text-white/20 italic font-serif">{accent.toUpperCase()}</span>}
+                    {title.toUpperCase()} {accent && <span className="text-white/40 italic font-serif">{accent.toUpperCase()}</span>}
                 </h1>
-                <p className="text-lg sm:text-2xl text-white/40 font-light tracking-wide max-w-3xl leading-relaxed">
+                <p className="text-lg sm:text-2xl text-white/60 font-light tracking-wide max-w-3xl leading-relaxed">
                     {subtitle}
                 </p>
             </div>

@@ -7,8 +7,11 @@
   --color-app-surface: #0f0f0f;
   --color-app-border: rgba(255, 255, 255, 0.05);
   --color-app-text: #ffffff;
-  --color-app-muted: #888888;
+  --color-app-muted: rgba(255, 255, 255, 0.6);
   --color-app-accent: #10b981;
+  --glass-bg: rgba(0, 0, 0, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(24px);
 }
 
 @keyframes laser-border {

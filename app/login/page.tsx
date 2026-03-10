@@ -52,22 +52,22 @@ export default function LoginPage() {
                         <Sparkles className="w-4 h-4 text-cyan-400 absolute -top-1 -right-1 animate-bounce" />
                     </motion.div>
                     <h1 className="text-4xl font-serif font-light tracking-[0.2em] text-white uppercase">
-                        Elite <span className="text-white/20 italic">Sales</span>
+                        Elite <span className="text-white/40 italic">Sales</span>
                     </h1>
-                    <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black">
+                    <p className="text-[10px] text-white/50 uppercase tracking-[0.5em] font-black">
                         Unified Operating System
                     </p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-black/20 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+                <div className="bg-black/60 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden group border border-white/10">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
 
                     <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                         <div className="space-y-6">
                             {/* Username */}
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Username</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/50 ml-2">Username</label>
                                 <div className="relative group/input">
                                     <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-cyan-400 transition-colors">
                                         <User className="w-4 h-4" />
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
                             {/* Password */}
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Security Key</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/50 ml-2">Security Key</label>
                                 <div className="relative group/input">
                                     <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-cyan-400 transition-colors">
                                         <Lock className="w-4 h-4" />

@@ -33,25 +33,25 @@ export const CloseDealModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpe
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
-                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-2xl">
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-xl bg-black/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-2xl">
                         <div className="flex justify-between items-center mb-10">
                             <div>
-                                <h3 className="text-2xl font-serif font-light tracking-[0.1em] uppercase text-white/90">{t('modal_close_deal_title')} <span className="text-white/20 italic">{t('modal_close_deal_accent')}</span></h3>
-                                <p className="text-[10px] text-white/30 uppercase tracking-[0.5em] font-black mt-2">{prospect?.business_name}</p>
+                                <h3 className="text-2xl font-serif font-light tracking-[0.1em] uppercase text-white/90">{t('modal_close_deal_title')} <span className="text-white/40 italic">{t('modal_close_deal_accent')}</span></h3>
+                                <p className="text-[10px] text-white/60 uppercase tracking-[0.5em] font-black mt-2">{prospect?.business_name}</p>
                             </div>
                             <button onClick={onClose} className="p-3 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
-                                <X className="w-5 h-5 text-white/40" />
+                                <X className="w-5 h-5 text-white/60" />
                             </button>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-8">
                             <div className="grid grid-cols-2 gap-8">
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('modal_total_price')}</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-2">{t('modal_total_price')}</label>
                                     <input type="number" required placeholder="5000" value={formData.total_price} onChange={e => setFormData({ ...formData, total_price: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-2xl font-serif text-white/90" />
                                 </div>
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('modal_installments')}</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-2">{t('modal_installments')}</label>
                                     <div className="flex gap-2">
                                         {[1, 2, 3].map((num) => (
                                             <button
@@ -60,7 +60,7 @@ export const CloseDealModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpe
                                                 onClick={() => setFormData({ ...formData, installments: num })}
                                                 className={`flex-1 py-5 rounded-2xl border transition-all text-xs font-black uppercase tracking-widest ${formData.installments === num
                                                     ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]'
-                                                    : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10 hover:border-white/20'
+                                                    : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:border-white/20'
                                                     }`}
                                             >
                                                 {num} {num === 1 ? t('modal_installment_single') : t('modal_installment_plural')}
@@ -113,11 +113,11 @@ export const VaultModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpen: b
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[250] flex items-end justify-end bg-black/60 backdrop-blur-sm">
-                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="w-full max-w-lg h-[calc(100vh-6rem)] mt-24 bg-[#0a0a0a] border-l border-white/10 p-12 overflow-y-auto custom-scrollbar shadow-2xl">
+                    <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="w-full max-w-lg h-[calc(100vh-6rem)] mt-24 bg-black/95 backdrop-blur-2xl border-l border-white/10 p-12 overflow-y-auto custom-scrollbar shadow-2xl">
                         <div className="flex justify-between items-center mb-12">
                             <div>
-                                <h3 className="text-2xl font-serif font-light tracking-widest uppercase text-white">{t('modal_vault_title')} <span className="text-white/20 italic">{t('modal_vault_accent')}</span></h3>
-                                <p className="text-[10px] text-white/30 tracking-[0.4em] font-black uppercase mt-1">{t('modal_vault_subtitle')}</p>
+                                <h3 className="text-2xl font-serif font-light tracking-widest uppercase text-white">{t('modal_vault_title')} <span className="text-white/40 italic">{t('modal_vault_accent')}</span></h3>
+                                <p className="text-[10px] text-white/60 tracking-[0.4em] font-black uppercase mt-1">{t('modal_vault_subtitle')}</p>
                             </div>
                             <button onClick={onClose} className="p-3 bg-white/5 rounded-full hover:bg-white/10 transition-colors"><X className="w-5 h-5" /></button>
                         </div>
@@ -130,24 +130,24 @@ export const VaultModal = ({ isOpen, onClose, prospect, onRefresh }: { isOpen: b
                                 { label: t('modal_vault_hosting'), field: 'database_hosting', type: 'text' },
                             ].map(f => (
                                 <div key={f.field} className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{f.label}</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-2">{f.label}</label>
                                     <div className="flex gap-2">
-                                        <input type={f.type} value={(details as any)[f.field]} onChange={e => setDetails({ ...details, [f.field]: e.target.value })} className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-5 text-sm text-white/80" />
-                                        <button onClick={() => navigator.clipboard.writeText((details as any)[f.field])} className="p-5 bg-white/5 rounded-2xl hover:bg-white/10 text-white/20 transition-colors"><Copy className="w-4 h-4" /></button>
+                                        <input type={f.type} value={(details as any)[f.field]} onChange={e => setDetails({ ...details, [f.field]: e.target.value })} className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-5 text-sm text-white/90" />
+                                        <button onClick={() => navigator.clipboard.writeText((details as any)[f.field])} className="p-5 bg-white/5 rounded-2xl hover:bg-white/10 text-white/40 transition-colors"><Copy className="w-4 h-4" /></button>
                                     </div>
                                 </div>
                             ))}
 
                             <div className="grid grid-cols-2 gap-6 pt-10 border-t border-white/5">
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('modal_vault_admin')}</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-2">{t('modal_vault_admin')}</label>
                                     <input value={details.admin_user} onChange={e => setDetails({ ...details, admin_user: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-sm" />
                                 </div>
                                 <div className="space-y-4">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-2">{t('modal_vault_pass')}</label>
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-white/50 ml-2">{t('modal_vault_pass')}</label>
                                     <div className="relative">
                                         <input type={showPass ? 'text' : 'password'} value={details.admin_password} onChange={e => setDetails({ ...details, admin_password: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 pr-14 text-sm font-mono tracking-widest" />
-                                        <button onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">{showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                                        <button onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">{showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
                                     </div>
                                 </div>
                             </div>
@@ -197,11 +197,11 @@ export const LeadFormModal = ({ isOpen, onClose, onRefresh, prospect }: { isOpen
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-[#0a0a0a] border border-white/10 rounded-3xl p-10 shadow-2xl">
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative w-full max-w-lg bg-black/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 shadow-2xl">
                         <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-xl font-serif tracking-widest uppercase">{prospect ? t('modal_lead_edit') : t('modal_lead_new')} <span className="text-white/20 italic">{t('modal_lead_entity')}</span></h3>
+                            <h3 className="text-xl font-serif tracking-widest uppercase">{prospect ? t('modal_lead_edit') : t('modal_lead_new')} <span className="text-white/40 italic">{t('modal_lead_entity')}</span></h3>
                             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                                <X className="w-5 h-5 text-white/20" />
+                                <X className="w-5 h-5 text-white/40" />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-6">

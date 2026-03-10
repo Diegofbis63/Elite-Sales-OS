@@ -58,8 +58,8 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
         <div className="space-y-8 lg:space-y-16 animate-in fade-in duration-500">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-10">
                 <div className="space-y-4">
-                    <h1 className="text-3xl lg:text-5xl font-sans font-black tracking-[0.2em] text-white/95 uppercase">{t('dash_title')}</h1>
-                    <p className="text-[10px] text-white/40 uppercase tracking-[0.5em] font-black">{t('dash_subtitle')}</p>
+                    <h1 className="text-3xl lg:text-5xl font-sans font-black tracking-[0.2em] text-white uppercase">{t('dash_title')}</h1>
+                    <p className="text-[10px] text-white/50 uppercase tracking-[0.5em] font-black">{t('dash_subtitle')}</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
                     <select
@@ -91,12 +91,12 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                         onClick={() => onNavigate(kpi.route)}
                     >
                         <div className="space-y-10 relative z-10">
-                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/30 group-hover:text-cyan-500/50 transition-colors">{kpi.label}</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/40 group-hover:text-cyan-500/70 transition-colors">{kpi.label}</p>
                             <div className="space-y-3">
                                 <p className="text-4xl font-serif font-light text-white/90 group-hover:text-white transition-colors">{kpi.value}</p>
                                 <div className="flex items-center gap-3">
                                     <div className="h-0.5 w-4 bg-white/20 group-hover:w-8 transition-all duration-500" />
-                                    <span className="text-[9px] font-black text-white/30 uppercase tracking-widest font-bold group-hover:text-white/60">{kpi.trend}</span>
+                                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest font-bold group-hover:text-white/80">{kpi.trend}</span>
                                 </div>
                             </div>
                         </div>
@@ -110,14 +110,14 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                         <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.6)] animate-pulse" />
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/90">{t('dash_terminal_title')}</h3>
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">{t('dash_terminal_title')}</h3>
                             </div>
-                            <div className="px-5 py-2 hover:bg-white/5 rounded-full text-[9px] font-mono text-white/20 tracking-widest uppercase cursor-default transition-colors">
+                            <div className="px-5 py-2 hover:bg-white/5 rounded-full text-[9px] font-mono text-white/30 tracking-widest uppercase cursor-default transition-colors">
                                 Outscraper Engine Active
                             </div>
                         </div>
 
-                        <div className="flex-1 bg-black/20 rounded-2xl p-8 font-mono text-[11px] leading-relaxed overflow-y-auto custom-scrollbar border border-white/5 shadow-inner">
+                        <div className="flex-1 bg-black/60 rounded-2xl p-8 font-mono text-[11px] leading-relaxed overflow-y-auto custom-scrollbar border border-white/5 shadow-inner">
                             {syncLog.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center opacity-20 py-20">
                                     <Sparkles className="w-12 h-12 mb-6" />
@@ -127,8 +127,8 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                                 <div className="space-y-4">
                                     {syncLog.map((log, i) => (
                                         <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex gap-4">
-                                            <span className="text-white/10 shrink-0 select-none">[{i + 1}]</span>
-                                            <span className={log.type === 'success' ? 'text-cyan-400' : log.type === 'error' ? 'text-red-400' : log.type === 'meta' ? 'text-purple-400 font-bold' : 'text-white/50'}>
+                                            <span className="text-white/20 shrink-0 select-none">[{i + 1}]</span>
+                                            <span className={log.type === 'success' ? 'text-cyan-400' : log.type === 'error' ? 'text-red-400' : log.type === 'meta' ? 'text-purple-400 font-bold' : 'text-white/60'}>
                                                 {log.msgKey ? t(log.msgKey as any) : log.msgStr}
                                             </span>
                                         </motion.div>
@@ -160,8 +160,8 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                 <SpotlightCard className="p-10 border-cyan-500/5">
                     <div className="space-y-10 h-full flex flex-col">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">{t('dash_billing_title')}</h3>
-                            <Bell className="w-4 h-4 text-white/10" />
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">{t('dash_billing_title')}</h3>
+                            <Bell className="w-4 h-4 text-white/20" />
                         </div>
 
                         <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-2 min-h-[400px]">
@@ -179,7 +179,7 @@ export const Dashboard = ({ stats, onRefresh, notifications, onNavigate }: { sta
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-white/90">
                                                     {n.type === 'billing' ? t('notif_billing') : t('notif_security')}
                                                 </p>
-                                                <p className="text-[11px] font-serif italic text-white/40 leading-relaxed">
+                                                <p className="text-[11px] font-serif italic text-white/60 leading-relaxed">
                                                     {n.type === 'billing' ? t('notif_billing_msg') : t('notif_security_msg')}
                                                 </p>
                                             </div>

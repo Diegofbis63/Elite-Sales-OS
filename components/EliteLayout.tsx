@@ -48,7 +48,7 @@ export const Sidebar = ({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                 )}
             </AnimatePresence>
 
-            <aside className={`w-64 border-r border-white/5 bg-black/20 backdrop-blur-xl h-full fixed left-0 top-0 flex flex-col z-[101] transition-transform duration-500 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`w-64 border-r border-white/10 bg-black/60 backdrop-blur-2xl h-full fixed left-0 top-0 flex flex-col z-[101] transition-transform duration-500 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="h-24 flex items-center px-10 border-b border-white/5">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black font-black text-xs shadow-[0_0_15px_rgba(255,255,255,0.2)]">E</div>
@@ -63,7 +63,7 @@ export const Sidebar = ({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                                 key={item.id}
                                 href={item.id}
                                 onClick={onClose}
-                                className={`w-full relative flex items-center px-6 py-4 rounded-xl transition-all group ${isActive ? 'text-white' : 'text-white/30 hover:text-white hover:bg-white/[0.02]'}`}
+                                className={`w-full relative flex items-center px-6 py-4 rounded-xl transition-all group ${isActive ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/[0.02]'}`}
                             >
                                 {isActive && (
                                     <motion.div
@@ -87,8 +87,8 @@ export const Sidebar = ({ isOpen, onClose }: { isOpen?: boolean, onClose?: () =>
                         <span className="text-[9px] font-black uppercase tracking-[0.2em]">{t?.('nav_logout') || 'Log Out'}</span>
                     </button>
                     <div className="p-6 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent border border-white/5 text-center">
-                        <p className="text-2xl font-serif italic text-white/20 leading-none italic uppercase tracking-tighter">Elite Agency</p>
-                        <p className="text-[9px] text-white/10 uppercase tracking-[0.4em] font-black mt-2">OS v4.0 Platinum</p>
+                        <p className="text-2xl font-serif italic text-white/40 leading-none italic uppercase tracking-tighter">Elite Agency</p>
+                        <p className="text-[9px] text-white/20 uppercase tracking-[0.4em] font-black mt-2">OS v4.0 Platinum</p>
                     </div>
                 </div>
             </aside>
@@ -100,7 +100,7 @@ export const Header = ({ profile, onEditProfile, onSearch, onOpenMenu }: { profi
     const { language, setLanguage, t } = useLanguage();
 
     return (
-        <header className="h-20 lg:h-24 flex items-center justify-between px-4 sm:px-6 lg:px-14 border-b border-white/5 bg-black/20 backdrop-blur-xl sticky top-0 z-40">
+        <header className="h-20 lg:h-24 flex items-center justify-between px-4 sm:px-6 lg:px-14 border-b border-white/10 bg-black/60 backdrop-blur-2xl sticky top-0 z-40">
             <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 flex-1 max-w-2xl">
                 <button onClick={onOpenMenu} className="lg:hidden p-2 text-white/40 hover:text-white transition-colors">
                     <LayoutDashboard className="w-5 h-5" />
@@ -149,7 +149,7 @@ export const Header = ({ profile, onEditProfile, onSearch, onOpenMenu }: { profi
                 <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 group cursor-pointer" onClick={onEditProfile}>
                     <div className="text-right hidden sm:block">
                         <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-white/90 truncate max-w-[100px]">{profile?.full_name || t('header_director')}</p>
-                        <p className="text-[7px] sm:text-[8px] uppercase tracking-widest text-white/20 mt-0.5 truncate max-w-[100px]">{profile?.role || t('header_role')}</p>
+                        <p className="text-[7px] sm:text-[8px] uppercase tracking-widest text-white/40 mt-0.5 truncate max-w-[100px]">{profile?.role || t('header_role')}</p>
                     </div>
                     <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border border-white/10 p-0.5 group-hover:border-white/40 transition-all duration-500">
                         <div className="w-full h-full rounded-full bg-white/5 overflow-hidden">

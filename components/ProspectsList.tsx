@@ -78,11 +78,11 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
             />
 
             <SpotlightCard className="overflow-hidden border-0" neon={false}>
-                <div className="bg-black/20 backdrop-blur-xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+                <div className="bg-black/60 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
-                                <tr className="border-b border-white/5 text-white/20 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] bg-white/[0.01]">
+                                <tr className="border-b border-white/10 text-white/40 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] bg-white/[0.01]">
                                     <th className="px-6 sm:px-12 py-6 sm:py-10 font-black">{t('leads_table_entity')}</th>
                                     <th className="px-6 sm:px-12 py-6 sm:py-10 font-black">{t('leads_table_industry')}</th>
                                     <th className="px-6 sm:px-12 py-6 sm:py-10 font-black">{t('leads_table_channel')}</th>
@@ -113,11 +113,11 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                 className="border-b border-white/5 hover:bg-white/[0.03] transition-all group"
                                             >
                                                 <td className="px-6 sm:px-12 py-6 sm:py-10">
-                                                    <div className="text-[13px] sm:text-[14px] font-serif tracking-widest text-white/90 group-hover:text-white transition-colors uppercase leading-normal font-light">{p.business_name || p.name}</div>
-                                                    <div className="text-[7px] sm:text-[8px] text-white/10 mt-2 uppercase tracking-[0.4em] font-black">UID: {String(p.id).slice(0, 8)}</div>
+                                                    <div className="text-[13px] sm:text-[14px] font-serif tracking-widest text-white group-hover:text-cyan-400 transition-colors uppercase leading-normal font-light">{p.business_name || p.name}</div>
+                                                    <div className="text-[7px] sm:text-[8px] text-white/20 mt-2 uppercase tracking-[0.4em] font-black">UID: {String(p.id).slice(0, 8)}</div>
                                                 </td>
                                                 <td className="px-6 sm:px-12 py-6 sm:py-10">
-                                                    <span className="text-[9px] sm:text-[10px] text-white/40 font-light tracking-[0.3em] uppercase">/ {p.industry || t('leads_industry_general')}</span>
+                                                    <span className="text-[9px] sm:text-[10px] text-white/60 font-light tracking-[0.3em] uppercase">/ {p.industry || t('leads_industry_general')}</span>
                                                 </td>
                                                 <td className="px-6 sm:px-12 py-6 sm:py-10">
                                                     <div className="text-[11px] sm:text-[12px] font-mono text-white/80 font-bold tracking-widest">{p.phone || t('leads_private')}</div>
@@ -132,7 +132,7 @@ export const ProspectsList = ({ searchQuery = '', onEdit, onOpenVault, onCloseDe
                                                         <select
                                                             value={p.status || 'cold'}
                                                             onChange={(e) => handleStatusUpdate(p.id, e.target.value)}
-                                                            className="bg-transparent text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-white/60 outline-none cursor-pointer hover:text-white transition-all appearance-none"
+                                                            className="bg-transparent text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-white/80 outline-none cursor-pointer hover:text-white transition-all appearance-none"
                                                         >
                                                             <option value="cold" className="bg-[#0a0a0a]">{t('leads_status_cold')}</option>
                                                             <option value="contacted" className="bg-[#0a0a0a]">{t('leads_status_contacted')}</option>
