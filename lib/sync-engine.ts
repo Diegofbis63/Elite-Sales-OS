@@ -131,6 +131,9 @@ export async function runProspectingSync(nicheQuery: string = "Salud y Estética
             }
             
             const gData = await gRes.json();
+            if (gData.status === "REQUEST_DENIED") {
+                throw new Error(`ACCESO_DENEGADO (Google Places): ${gData.error_message || "La clave de API de Google Maps está restringida o carece de permisos para Places API."}`);
+            }
             if (!gData.results || gData.results.length === 0) {
                 return {
                     success: false,
