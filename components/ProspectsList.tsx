@@ -234,6 +234,15 @@ export const WhatsAppModal = ({ isOpen, onClose, prospect }: { isOpen: boolean, 
         alert(t('copy_success'));
     };
 
+    const handleSendDirect = () => {
+        if (!message || !prospect?.phone) return;
+        const cleaned = prospect.phone.replace(/[^0-9]/g, '');
+        const url = `https://api.whatsapp.com/send?phone=${cleaned}&text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+        queueMessage(prospect.phone, message);
+        onClose();
+    };
+
     const handleSelectProject = (project: Project) => {
         const content = project[language];
         const projectText = `
@@ -318,13 +327,22 @@ ${project.vercel_url}
                             className="w-full h-52 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all resize-none font-serif leading-relaxed"
                         />
 
-                        <button
-                            onClick={handleSend}
-                            disabled={isSending || !message}
-                            className="w-full py-5 bg-white text-black text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl mt-8 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] transition-all disabled:opacity-50"
-                        >
-                            {isSending ? t('loading') : t('projects_deploy_btn')}
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                            <button
+                                onClick={handleSendDirect}
+                                disabled={!message}
+                                className="flex-1 py-5 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_15px_30px_rgba(16,185,129,0.2)] disabled:opacity-50"
+                            >
+                                Enviar Directo (WhatsApp)
+                            </button>
+                            <button
+                                onClick={handleSend}
+                                disabled={isSending || !message}
+                                className="flex-1 py-5 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all disabled:opacity-50"
+                            >
+                                {isSending ? t('loading') : "Encolar en Bot"}
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             )}

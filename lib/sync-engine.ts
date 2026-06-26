@@ -81,58 +81,113 @@ export async function runProspectingSync(nicheQuery: string = "Salud y Estética
         return { success: false, error: "EMERGENCIA: La base de datos no está disponible. Revisa tus variables de entorno en Vercel." };
     }
 
+    let places: any[] = [];
+    let usingFallback = false;
+
     try {
-        const apiKey = process.env.OUTSCRAPER_API_KEY;
-        if (!apiKey) {
-            throw new Error("CONFIG_ERROR: Falta OUTSCRAPER_API_KEY en el entorno.");
+        try {
+            const apiKey = process.env.OUTSCRAPER_API_KEY;
+            if (!apiKey) {
+                throw new Error("CONFIG_ERROR: Falta OUTSCRAPER_API_KEY en el entorno.");
+            }
+
+            const response = await fetch(url, {
+                headers: { 'X-API-KEY': apiKey }
+            });
+
+            console.log("[DEBUG 3] HTTP Status Outscraper:", response.status, response.statusText);
+
+            if (!response.ok) {
+                throw new Error(`API_ERROR: Outscraper respondió con status ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log("[DEBUG 4] Respuesta Cruda JSON (Muestra):", JSON.stringify(data).substring(0, 200));
+
+            if (!data.data || !data.data[0]) {
+                console.log("[DEBUG 5] FALLO: data.data[0] es undefined o nulo.");
+                return {
+                    success: false,
+                    error: `CERO_RESULTADOS (v7): Outscraper no localizó lugares para "${searchKeyword}" en esta zona.`
+                };
+            }
+
+            places = data.data[0];
+            console.log(`[DEBUG 6] ÉXITO DE API: Se recibieron ${places.length} locales crudos. Iniciando filtrado...`);
+        } catch (apiError: any) {
+            console.warn("⚠️ ERROR EN OUTSCRAPER (Status 402 o similar). Iniciando Fallback de Google Places API...", apiError);
+            const googleApiKey = process.env.GOOGLE_MAPS_API_KEY;
+            if (!googleApiKey) {
+                throw new Error(`FALLO_APIS: Outscraper falló (${apiError.message}) y GOOGLE_MAPS_API_KEY no está configurada.`);
+            }
+
+            usingFallback = true;
+            const gQuery = encodeURIComponent(`${searchKeyword} near ${locationAnchor}`);
+            const gUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${gQuery}&key=${googleApiKey}`;
+            
+            const gRes = await fetch(gUrl);
+            if (!gRes.ok) {
+                throw new Error(`FALLO_APIS: Outscraper falló (${apiError.message}) y Google Places API falló con status ${gRes.status}`);
+            }
+            
+            const gData = await gRes.json();
+            if (!gData.results || gData.results.length === 0) {
+                return {
+                    success: false,
+                    error: `CERO_RESULTADOS: Fallback de Google Places no localizó lugares para "${searchKeyword}" en esta zona.`
+                };
+            }
+
+            console.log(`[FALLBACK] Google Places encontró ${gData.results.length} lugares en búsqueda inicial. Obteniendo detalles de contacto...`);
+
+            // Obtener detalles para cada lugar (máximo 15 para evitar límite / costo de API y timeout)
+            const limitSlice = gData.results.slice(0, 15);
+            for (const item of limitSlice) {
+                try {
+                    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${item.place_id}&fields=name,formatted_phone_number,website,types,rating&key=${googleApiKey}`;
+                    const detailsRes = await fetch(detailsUrl);
+                    if (detailsRes.ok) {
+                        const detailsData = await detailsRes.json();
+                        const place = detailsData.result;
+                        if (place) {
+                            places.push({
+                                name: place.name,
+                                phone: place.formatted_phone_number || "",
+                                website: place.website || "",
+                                type: place.types?.[0] || searchKeyword,
+                                rating: place.rating || 0,
+                                place_id: item.place_id
+                            });
+                        }
+                    }
+                } catch (errDet) {
+                    console.error(`Error obteniendo detalles del place ${item.place_id}:`, errDet);
+                }
+            }
         }
 
-        const response = await fetch(url, {
-            headers: { 'X-API-KEY': apiKey }
-        });
+    if (places.length > 0) {
+        console.log("[DEBUG 7] Muestra de Propiedades del Local 1:", Object.keys(places[0]).join(", "));
+    }
 
-        console.log("[DEBUG 3] HTTP Status Outscraper:", response.status, response.statusText);
-
-        if (!response.ok) {
-            throw new Error(`API_ERROR: Outscraper respondió con status ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("[DEBUG 4] Respuesta Cruda JSON (Muestra):", JSON.stringify(data).substring(0, 200));
-
-        if (!data.data || !data.data[0]) {
-            console.log("[DEBUG 5] FALLO: data.data[0] es undefined o nulo.");
-            return {
-                success: false,
-                error: `CERO_RESULTADOS (v7): Outscraper no localizó lugares para "${searchKeyword}" en esta zona.`
-            };
-        }
-
-        const places = data.data[0];
-        console.log(`[DEBUG 6] ÉXITO DE API: Se recibieron ${places.length} locales crudos. Iniciando filtrado...`);
-
-        if (places.length > 0) {
-            console.log("[DEBUG 7] Muestra de Propiedades del Local 1:", Object.keys(places[0]).join(", "));
-        }
-
-        // FILTRO ESTRICTO (v7): Con teléfono y SIN website (propiedad exacta confirmada)
-        const filteredLeads = places
-            .filter((place: any) => {
-                const hasPhone = place.phone && String(place.phone).trim() !== '';
-                // Propiedad 'website' confirmada por telemetría anterior
-                const noWebsite = !place.website || String(place.website).trim() === '';
-                return hasPhone && noWebsite;
-            })
-            .map((place: any) => ({
-                name: 'Gerencia',
-                business_name: place.name || 'Negocio Sin Nombre',
-                phone: place.phone,
-                industry: place.type || searchKeyword,
-                rating: place.rating ? String(place.rating) : '0',
-                has_website: false,
-                maps_id: place.place_id,
-                status: 'cold',
-            }));
+    // FILTRO ESTRICTO (v7): Con teléfono y SIN website (propiedad exacta confirmada)
+    const filteredLeads = places
+        .filter((place: any) => {
+            const hasPhone = place.phone && String(place.phone).trim() !== '';
+            // Propiedad 'website' confirmada
+            const noWebsite = !place.website || String(place.website).trim() === '';
+            return hasPhone && noWebsite;
+        })
+        .map((place: any) => ({
+            name: 'Gerencia',
+            business_name: place.name || place.business_name || 'Negocio Sin Nombre',
+            phone: place.phone,
+            industry: place.type || place.industry || searchKeyword,
+            rating: place.rating ? String(place.rating) : '0',
+            has_website: false,
+            maps_id: place.place_id || place.maps_id,
+            status: 'cold',
+        }));
 
         console.log(`[DEBUG 8] Tras filtrado estricto (v7), quedaron ${filteredLeads.length} prospectos.`);
 
